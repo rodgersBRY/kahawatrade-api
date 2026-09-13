@@ -2,6 +2,7 @@ import express, { Express } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
+import compression from "compression";
 
 import { env } from "../config/env.js";
 import { apiRateLimiter } from "../common/middleware/rateLimiters.js";
@@ -27,6 +28,8 @@ export function createApp(): Express {
         crossOriginResourcePolicy: false,
       }),
     );
+
+  app.use(compression());
 
   app.use(
     cors({
