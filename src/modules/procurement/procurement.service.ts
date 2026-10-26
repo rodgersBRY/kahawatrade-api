@@ -24,7 +24,7 @@ export class ProcurementService {
         [input.marketing_agent_id, actor.organizationId],
       );
       if (supplierResult.rowCount === 0) {
-        throw new ApiError(404, `Supplier ${input.marketing_agent_id} not found`);
+        throw new ApiError(404, `Supplier not found`);
       }
       const supplierType = String(supplierResult.rows[0].supplier_type);
       if (supplierType !== "auction_agent") {
@@ -70,14 +70,18 @@ export class ProcurementService {
       await client.query(
         `
         INSERT INTO auction_procurements (
-          id, lot_id, auction_lot_number, marketing_agent_id, catalog_document_path, immutable, organization_id
+          id, lot_id, auction_lot_number, sale_number, outturn_number, mark,
+          marketing_agent_id, catalog_document_path, immutable, organization_id
         )
-        VALUES ($1, $2, $3, $4, $5, TRUE, $6);
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, $9);
         `,
         [
           crypto.randomUUID(),
           insertedLot.id,
           input.lot_number,
+          input.sale_number,
+          input.outturn_number,
+          input.mark,
           input.marketing_agent_id,
           input.catalog_document_path ?? null,
           actor.organizationId,
@@ -94,7 +98,7 @@ export class ProcurementService {
         [input.supplier_id, actor.organizationId],
       );
       if (supplierResult.rowCount === 0) {
-        throw new ApiError(404, `Supplier ${input.supplier_id} not found`);
+        throw new ApiError(404, `Supplier not found`);
       }
       const supplierType = String(supplierResult.rows[0].supplier_type);
       if (supplierType === "auction_agent") {
@@ -134,7 +138,7 @@ export class ProcurementService {
         [input.agreement_id, actor.organizationId],
       );
       if (agreementResult.rowCount === 0) {
-        throw new ApiError(404, `Direct agreement ${input.agreement_id} not found`);
+        throw new ApiError(404, `Direct agreement not found`);
       }
       const agreement = agreementResult.rows[0];
 
@@ -256,7 +260,7 @@ export class ProcurementService {
     if (listQuery.search) {
       values.push(`%${escapeLikeQuery(listQuery.search)}%`);
       whereClauses.push(
-        `(ap.auction_lot_number ILIKE $${values.length} ESCAPE '\\' OR s.name ILIKE $${values.length} ESCAPE '\\' OR l.lot_code ILIKE $${values.length} ESCAPE '\\')`,
+        `(ap.auction_lot_number ILIKE $${values.length} ESCAPE '\\' OR ap.sale_number ILIKE $${values.length} ESCAPE '\\' OR ap.outturn_number ILIKE $${values.length} ESCAPE '\\' OR ap.mark ILIKE $${values.length} ESCAPE '\\' OR s.name ILIKE $${values.length} ESCAPE '\\' OR l.lot_code ILIKE $${values.length} ESCAPE '\\')`,
       );
     }
     if (marketingAgentId) {
@@ -300,6 +304,9 @@ export class ProcurementService {
       SELECT
         l.id,
         ap.auction_lot_number,
+        ap.sale_number,
+        ap.outturn_number,
+        ap.mark,
         s.name AS marketing_agent,
         g.code AS grade,
         w.name AS warehouse,
@@ -392,7 +399,7 @@ export class ProcurementService {
         dd.id,
         dd.delivery_reference,
         l.lot_code,
-        da.id AS agreement,
+        da.id AS agreement_id,
         da.agreement_reference,
         s.name AS supplier,
         g.code AS grade,

@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 export const auctionLotSchema = z.object({
-  lot_number: z.string().min(1),
+  lot_number: z.string().trim().min(1),
+  sale_number: z.string().trim().min(1),
+  outturn_number: z.string().trim().min(1),
+  mark: z.string().trim().min(1),
   marketing_agent_id: z.string().uuid(),
   grade_id: z.string().uuid(),
   warehouse_id: z.string().uuid(),

@@ -104,6 +104,9 @@ function validAuctionLotPayload(
 ): Record<string, unknown> {
   return {
     lot_number: `AUC-${randomUUID()}`,
+    sale_number: "SALE-01",
+    outturn_number: "OT-1234",
+    mark: "Test Factory",
     marketing_agent_id: marketingAgentId,
     grade_id: prereqs.gradeId,
     warehouse_id: prereqs.warehouseId,
@@ -162,6 +165,77 @@ describe("procurement integration", () => {
       expect(res.body.source).toBe("auction");
       expect(res.body.status).toBe("in_stock");
       expect(Number(res.body.bags_total)).toBe(100);
+    });
+
+    it("allows the same lot number in different sales", async () => {
+      const org = await provisionOrgAndAdmin();
+      const marketingAgentId = await createSupplier(org.accessToken, "auction_agent");
+      const prereqs = await createLotPrerequisites(org.accessToken);
+      const lotNumber = `AUC-${randomUUID()}`;
+
+      for (const saleNumber of ["SALE-10", "SALE-11"]) {
+        const res = await request(app)
+          .post("/api/v1/procurement/auction-lots")
+          .set(authHeader(org.accessToken))
+          .send({
+            ...validAuctionLotPayload(marketingAgentId, prereqs),
+            lot_number: lotNumber,
+            sale_number: saleNumber,
+          });
+        expect(res.status).toBe(201);
+      }
+    });
+
+    it("rejects a duplicate lot number within the same sale", async () => {
+      const org = await provisionOrgAndAdmin();
+      const marketingAgentId = await createSupplier(org.accessToken, "auction_agent");
+      const prereqs = await createLotPrerequisites(org.accessToken);
+      const payload = {
+        ...validAuctionLotPayload(marketingAgentId, prereqs),
+        lot_number: `AUC-${randomUUID()}`,
+        sale_number: "SALE-12",
+      };
+
+      const first = await request(app)
+        .post("/api/v1/procurement/auction-lots")
+        .set(authHeader(org.accessToken))
+        .send(payload);
+      expect(first.status).toBe(201);
+
+      const second = await request(app)
+        .post("/api/v1/procurement/auction-lots")
+        .set(authHeader(org.accessToken))
+        .send(payload);
+      expect(second.status).toBe(409);
+    });
+
+    it("returns sale, outturn and mark in the auction lot list", async () => {
+      const org = await provisionOrgAndAdmin();
+      const marketingAgentId = await createSupplier(org.accessToken, "auction_agent");
+      const prereqs = await createLotPrerequisites(org.accessToken);
+
+      const createRes = await request(app)
+        .post("/api/v1/procurement/auction-lots")
+        .set(authHeader(org.accessToken))
+        .send({
+          ...validAuctionLotPayload(marketingAgentId, prereqs),
+          sale_number: "SALE-13",
+          outturn_number: "OT-9876",
+          mark: "Gatomboya",
+        });
+      expect(createRes.status).toBe(201);
+
+      const listRes = await request(app)
+        .get("/api/v1/procurement/auction-lots")
+        .query({ search: "OT-9876" })
+        .set(authHeader(org.accessToken));
+      expect(listRes.status).toBe(200);
+      expect(listRes.body.data).toHaveLength(1);
+      expect(listRes.body.data[0]).toMatchObject({
+        sale_number: "SALE-13",
+        outturn_number: "OT-9876",
+        mark: "Gatomboya",
+      });
     });
 
     it("rejects a payload missing required fields", async () => {
@@ -318,6 +392,30 @@ describe("procurement integration", () => {
       expect(res.body.id).toEqual(expect.any(String));
       expect(res.body.source).toBe("direct");
       expect(res.body.status).toBe("in_stock");
+    });
+
+    it("rejects a duplicate internal_lot_id within the org", async () => {
+      const org = await provisionOrgAndAdmin();
+      const supplierId = await createSupplier(org.accessToken, "mill");
+      const prereqs = await createLotPrerequisites(org.accessToken);
+      const agreementRes = await request(app)
+        .post("/api/v1/procurement/direct-agreements")
+        .set(authHeader(org.accessToken))
+        .send(validDirectAgreementPayload(supplierId));
+      expect(agreementRes.status).toBe(201);
+      const internalLotId = `INT-${randomUUID()}`;
+
+      const first = await request(app)
+        .post("/api/v1/procurement/direct-deliveries")
+        .set(authHeader(org.accessToken))
+        .send({ ...validDirectDeliveryPayload(agreementRes.body.id, prereqs), internal_lot_id: internalLotId });
+      expect(first.status).toBe(201);
+
+      const second = await request(app)
+        .post("/api/v1/procurement/direct-deliveries")
+        .set(authHeader(org.accessToken))
+        .send({ ...validDirectDeliveryPayload(agreementRes.body.id, prereqs), internal_lot_id: internalLotId });
+      expect(second.status).toBe(409);
     });
 
     it("rejects a payload missing required fields", async () => {

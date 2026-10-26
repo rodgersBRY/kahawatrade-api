@@ -29,7 +29,7 @@ export class ShipmentsService {
         [input.contract_id, actor.organizationId],
       );
       if (contractResult.rowCount === 0) {
-        throw new ApiError(404, `Contract ${input.contract_id} not found`);
+        throw new ApiError(404, `Contract not found`);
       }
       const contract = contractResult.rows[0];
 
@@ -193,7 +193,7 @@ export class ShipmentsService {
         [shipmentId, actor.organizationId],
       );
       if (shipmentResult.rowCount === 0) {
-        throw new ApiError(404, `Shipment ${shipmentId} not found`);
+        throw new ApiError(404, `Shipment not found`);
       }
       const shipment = shipmentResult.rows[0];
       const currentIndex = SHIPMENT_PROGRESSION.indexOf(String(shipment.status));
@@ -247,7 +247,7 @@ export class ShipmentsService {
         [shipmentId, actor.organizationId],
       );
       if (shipmentResult.rowCount === 0) {
-        throw new ApiError(404, `Shipment ${shipmentId} not found`);
+        throw new ApiError(404, `Shipment not found`);
       }
       const shipment = shipmentResult.rows[0];
 
