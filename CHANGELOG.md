@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.2 - 2026-10-26
+
+### Added
+
+- Soft delete master data so existing lots, contracts and agreements keep their suppliers, buyers, warehouses, grades and bag types
+
+
+
+
 ## v0.2.1 - 2026-10-26
 
 _No user-facing changes._
