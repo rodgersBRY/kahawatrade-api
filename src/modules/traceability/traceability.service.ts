@@ -6,11 +6,24 @@ export class TraceabilityService {
   async getLotTraceability(lotId: string, actor: AuthContext): Promise<unknown> {
     const lotResult = await withActor(
       actor,
-      "SELECT * FROM lots WHERE id = $1 AND organization_id = $2",
+      `
+      SELECT
+        l.*,
+        s.name AS supplier,
+        g.code AS grade,
+        w.name AS warehouse,
+        bt.name AS bag_type
+      FROM lots l
+      LEFT JOIN suppliers s ON s.id = l.supplier_id
+      LEFT JOIN grades g ON g.id = l.grade_id
+      LEFT JOIN warehouses w ON w.id = l.warehouse_id
+      LEFT JOIN bag_types bt ON bt.id = l.bag_type_id
+      WHERE l.id = $1 AND l.organization_id = $2
+      `,
       [lotId, actor.organizationId],
     );
     if (lotResult.rowCount === 0) {
-      throw new ApiError(404, `Lot ${lotId} not found`);
+      throw new ApiError(404, `Lot not found`);
     }
     const lot = lotResult.rows[0];
 
@@ -18,7 +31,12 @@ export class TraceabilityService {
     if (String(lot.source) === "auction") {
       const auctionResult = await withActor(
         actor,
-        "SELECT * FROM auction_procurements WHERE lot_id = $1 AND organization_id = $2",
+        `
+        SELECT ap.*, s.name AS marketing_agent
+        FROM auction_procurements ap
+        LEFT JOIN suppliers s ON s.id = ap.marketing_agent_id
+        WHERE ap.lot_id = $1 AND ap.organization_id = $2
+        `,
         [lotId, actor.organizationId],
       );
       const auction = auctionResult.rows[0];
@@ -26,6 +44,7 @@ export class TraceabilityService {
         source: "auction",
         auction_lot_number: auction?.auction_lot_number ?? lot.source_reference,
         marketing_agent_id: auction?.marketing_agent_id ?? lot.supplier_id,
+        marketing_agent: auction?.marketing_agent ?? lot.supplier ?? null,
         catalog_document_path: auction?.catalog_document_path ?? null,
       };
     } else {
@@ -58,7 +77,14 @@ export class TraceabilityService {
 
     const allocationsResult = await withActor(
       actor,
-      "SELECT * FROM allocations WHERE lot_id = $1 AND organization_id = $2 ORDER BY id",
+      `
+      SELECT a.*, c.contract_number, sh.shipment_number
+      FROM allocations a
+      LEFT JOIN contracts c ON c.id = a.contract_id
+      LEFT JOIN shipments sh ON sh.id = a.shipment_id
+      WHERE a.lot_id = $1 AND a.organization_id = $2
+      ORDER BY a.id
+      `,
       [lotId, actor.organizationId],
     );
     const shipmentIds = Array.from(
@@ -74,7 +100,13 @@ export class TraceabilityService {
       shipmentIds.length > 0
         ? await withActor(
             actor,
-            "SELECT * FROM shipments WHERE id = ANY($1::uuid[]) AND organization_id = $2 ORDER BY id",
+            `
+            SELECT sh.*, c.contract_number
+            FROM shipments sh
+            LEFT JOIN contracts c ON c.id = sh.contract_id
+            WHERE sh.id = ANY($1::uuid[]) AND sh.organization_id = $2
+            ORDER BY sh.id
+            `,
             [shipmentIds, actor.organizationId],
           )
         : { rows: [] };
@@ -82,7 +114,13 @@ export class TraceabilityService {
       shipmentIds.length > 0
         ? await withActor(
             actor,
-            "SELECT * FROM shipment_documents WHERE shipment_id = ANY($1::uuid[]) AND organization_id = $2 ORDER BY id",
+            `
+            SELECT d.*, sh.shipment_number
+            FROM shipment_documents d
+            LEFT JOIN shipments sh ON sh.id = d.shipment_id
+            WHERE d.shipment_id = ANY($1::uuid[]) AND d.organization_id = $2
+            ORDER BY d.id
+            `,
             [shipmentIds, actor.organizationId],
           )
         : { rows: [] };

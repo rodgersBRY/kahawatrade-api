@@ -55,7 +55,7 @@ export async function ensureReference(
         );
 
   if (result.rowCount === 0) {
-    throw new ApiError(404, `${label} ${id} not found`);
+    throw new ApiError(404, `${label} not found`);
   }
 }
 
@@ -76,7 +76,7 @@ export async function refreshLotStatus(
         );
 
   if (lotResult.rowCount === 0) {
-    throw new ApiError(404, `Lot ${lotId} not found`);
+    throw new ApiError(404, `Lot not found`);
   }
 
   const weightAvailable = toNumber(lotResult.rows[0].weight_available_kg);

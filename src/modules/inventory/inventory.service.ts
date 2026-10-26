@@ -106,7 +106,7 @@ export class InventoryService {
         [input.lot_id, actor.organizationId],
       );
       if (lotResult.rowCount === 0) {
-        throw new ApiError(404, `Lot ${input.lot_id} not found`);
+        throw new ApiError(404, `Lot not found`);
       }
 
       const lot = lotResult.rows[0];
