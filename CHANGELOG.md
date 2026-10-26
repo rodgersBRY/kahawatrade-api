@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.1 - 2026-10-26
+
+_No user-facing changes._
+
+
 ## v0.2.0 - 2026-10-26
 
 ### Added
