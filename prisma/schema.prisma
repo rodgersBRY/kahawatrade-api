@@ -266,6 +266,7 @@ model Supplier {
   supplierType   SupplierType @map("supplier_type")
   country        String?
   createdAt      DateTime     @default(now()) @map("created_at")
+  deletedAt      DateTime?    @map("deleted_at")
   organizationId String       @map("organization_id") @db.Uuid
 
   lots             Lot[]
@@ -282,6 +283,7 @@ model Buyer {
   name           String
   country        String?
   createdAt      DateTime     @default(now()) @map("created_at")
+  deletedAt      DateTime?    @map("deleted_at")
   organizationId String       @map("organization_id") @db.Uuid
   contracts      Contract[]
   organization   Organization @relation(fields: [organizationId], references: [id])
@@ -295,6 +297,7 @@ model Warehouse {
   name           String
   location       String?
   createdAt      DateTime     @default(now()) @map("created_at")
+  deletedAt      DateTime?    @map("deleted_at")
   organizationId String       @map("organization_id") @db.Uuid
   lots           Lot[]
   organization   Organization @relation(fields: [organizationId], references: [id])
@@ -308,6 +311,7 @@ model Grade {
   code           String
   description    String?
   createdAt      DateTime     @default(now()) @map("created_at")
+  deletedAt      DateTime?    @map("deleted_at")
   organizationId String       @map("organization_id") @db.Uuid
   lots           Lot[]
   contracts      Contract[]
@@ -322,6 +326,7 @@ model BagType {
   name           String
   weightKg       Decimal      @map("weight_kg") @db.Decimal(10, 3)
   createdAt      DateTime     @default(now()) @map("created_at")
+  deletedAt      DateTime?    @map("deleted_at")
   organizationId String       @map("organization_id") @db.Uuid
   lots           Lot[]
   organization   Organization @relation(fields: [organizationId], references: [id])
@@ -448,7 +453,7 @@ model Contract {
   organizationId      String         @map("organization_id") @db.Uuid
 
   buyer        Buyer        @relation(fields: [buyerId], references: [id])
-  grade        Grade?       @relation(fields: [gradeId], references: [id])
+  grade        Grade?       @relation(fields: [gradeId], references: [id], onDelete: Restrict)
   allocations  Allocation[]
   shipments    Shipment[]
   organization Organization @relation(fields: [organizationId], references: [id])

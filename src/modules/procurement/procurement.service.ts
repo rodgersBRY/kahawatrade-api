@@ -20,7 +20,7 @@ export class ProcurementService {
   async createAuctionLot(input: AuctionLotInput, actor: AuthContext): Promise<unknown> {
     return withTransaction(async (client) => {
       const supplierResult = await client.query(
-        "SELECT supplier_type FROM suppliers WHERE id = $1 AND organization_id = $2",
+        "SELECT supplier_type FROM suppliers WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL",
         [input.marketing_agent_id, actor.organizationId],
       );
       if (supplierResult.rowCount === 0) {
@@ -94,7 +94,7 @@ export class ProcurementService {
   async createDirectAgreement(input: DirectAgreementInput, actor: AuthContext): Promise<unknown> {
     return withTransaction(async (client) => {
       const supplierResult = await client.query(
-        "SELECT supplier_type FROM suppliers WHERE id = $1 AND organization_id = $2",
+        "SELECT supplier_type FROM suppliers WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL",
         [input.supplier_id, actor.organizationId],
       );
       if (supplierResult.rowCount === 0) {
@@ -441,7 +441,7 @@ export class ProcurementService {
           `
           SELECT id, name, supplier_type
           FROM suppliers
-          WHERE supplier_type <> 'auction_agent' AND organization_id = $1
+          WHERE supplier_type <> 'auction_agent' AND organization_id = $1 AND deleted_at IS NULL
           ORDER BY name ASC
           `,
           [actor.organizationId],
@@ -451,7 +451,7 @@ export class ProcurementService {
           `
           SELECT id, name, supplier_type
           FROM suppliers
-          WHERE supplier_type = 'auction_agent' AND organization_id = $1
+          WHERE supplier_type = 'auction_agent' AND organization_id = $1 AND deleted_at IS NULL
           ORDER BY name ASC
           `,
           [actor.organizationId],
@@ -461,7 +461,7 @@ export class ProcurementService {
           `
           SELECT id, name, location
           FROM warehouses
-          WHERE organization_id = $1
+          WHERE organization_id = $1 AND deleted_at IS NULL
           ORDER BY name ASC
           `,
           [actor.organizationId],
@@ -471,7 +471,7 @@ export class ProcurementService {
           `
           SELECT id, code, description
           FROM grades
-          WHERE organization_id = $1
+          WHERE organization_id = $1 AND deleted_at IS NULL
           ORDER BY code ASC
           `,
           [actor.organizationId],
@@ -481,7 +481,7 @@ export class ProcurementService {
           `
           SELECT id, name, weight_kg
           FROM bag_types
-          WHERE organization_id = $1
+          WHERE organization_id = $1 AND deleted_at IS NULL
           ORDER BY weight_kg ASC, name ASC
           `,
           [actor.organizationId],
