@@ -44,7 +44,7 @@ export class FinanceService {
       [contractId, actor.organizationId],
     );
     if (contractResult.rowCount === 0) {
-      throw new ApiError(404, `Contract ${contractId} not found`);
+      throw new ApiError(404, `Contract not found`);
     }
     const contract = contractResult.rows[0];
 

@@ -24,7 +24,7 @@ export class ProcurementService {
         [input.marketing_agent_id, actor.organizationId],
       );
       if (supplierResult.rowCount === 0) {
-        throw new ApiError(404, `Supplier ${input.marketing_agent_id} not found`);
+        throw new ApiError(404, `Supplier not found`);
       }
       const supplierType = String(supplierResult.rows[0].supplier_type);
       if (supplierType !== "auction_agent") {
@@ -94,7 +94,7 @@ export class ProcurementService {
         [input.supplier_id, actor.organizationId],
       );
       if (supplierResult.rowCount === 0) {
-        throw new ApiError(404, `Supplier ${input.supplier_id} not found`);
+        throw new ApiError(404, `Supplier not found`);
       }
       const supplierType = String(supplierResult.rows[0].supplier_type);
       if (supplierType === "auction_agent") {
@@ -134,7 +134,7 @@ export class ProcurementService {
         [input.agreement_id, actor.organizationId],
       );
       if (agreementResult.rowCount === 0) {
-        throw new ApiError(404, `Direct agreement ${input.agreement_id} not found`);
+        throw new ApiError(404, `Direct agreement not found`);
       }
       const agreement = agreementResult.rows[0];
 
@@ -392,7 +392,7 @@ export class ProcurementService {
         dd.id,
         dd.delivery_reference,
         l.lot_code,
-        da.id AS agreement,
+        da.id AS agreement_id,
         da.agreement_reference,
         s.name AS supplier,
         g.code AS grade,

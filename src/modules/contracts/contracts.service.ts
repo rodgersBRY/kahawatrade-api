@@ -82,7 +82,7 @@ export class ContractsService {
         [contractId, actor.organizationId],
       );
       if (contractResult.rowCount === 0) {
-        throw new ApiError(404, `Contract ${contractId} not found`);
+        throw new ApiError(404, `Contract not found`);
       }
       const contract = contractResult.rows[0];
       if (String(contract.status) === "closed") {
@@ -94,7 +94,7 @@ export class ContractsService {
         [input.lot_id, actor.organizationId],
       );
       if (lotResult.rowCount === 0) {
-        throw new ApiError(404, `Lot ${input.lot_id} not found`);
+        throw new ApiError(404, `Lot not found`);
       }
       const lot = lotResult.rows[0];
 

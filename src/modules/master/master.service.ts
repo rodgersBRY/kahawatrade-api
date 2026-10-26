@@ -215,7 +215,7 @@ export class MasterService {
     );
 
     if (result.rowCount === 0) {
-      throw new ApiError(404, `Supplier ${id} not found`);
+      throw new ApiError(404, `Supplier not found`);
     }
     return result.rows[0];
   }
@@ -228,7 +228,7 @@ export class MasterService {
     ).catch((error: unknown) => throwReferenceConflict(error, "Supplier"));
 
     if (result.rowCount === 0) {
-      throw new ApiError(404, `Supplier ${id} not found`);
+      throw new ApiError(404, `Supplier not found`);
     }
     return result.rows[0];
   }
@@ -314,7 +314,7 @@ export class MasterService {
     );
 
     if (result.rowCount === 0) {
-      throw new ApiError(404, `Buyer ${id} not found`);
+      throw new ApiError(404, `Buyer not found`);
     }
     return result.rows[0];
   }
@@ -327,7 +327,7 @@ export class MasterService {
     ).catch((error: unknown) => throwReferenceConflict(error, "Buyer"));
 
     if (result.rowCount === 0) {
-      throw new ApiError(404, `Buyer ${id} not found`);
+      throw new ApiError(404, `Buyer not found`);
     }
     return result.rows[0];
   }
@@ -412,7 +412,7 @@ export class MasterService {
     );
 
     if (result.rowCount === 0) {
-      throw new ApiError(404, `Warehouse ${id} not found`);
+      throw new ApiError(404, `Warehouse not found`);
     }
     return result.rows[0];
   }
@@ -425,7 +425,7 @@ export class MasterService {
     ).catch((error: unknown) => throwReferenceConflict(error, "Warehouse"));
 
     if (result.rowCount === 0) {
-      throw new ApiError(404, `Warehouse ${id} not found`);
+      throw new ApiError(404, `Warehouse not found`);
     }
     return result.rows[0];
   }
@@ -507,7 +507,7 @@ export class MasterService {
     );
 
     if (result.rowCount === 0) {
-      throw new ApiError(404, `Grade ${id} not found`);
+      throw new ApiError(404, `Grade not found`);
     }
     return result.rows[0];
   }
@@ -520,7 +520,7 @@ export class MasterService {
     ).catch((error: unknown) => throwReferenceConflict(error, "Grade"));
 
     if (result.rowCount === 0) {
-      throw new ApiError(404, `Grade ${id} not found`);
+      throw new ApiError(404, `Grade not found`);
     }
     return result.rows[0];
   }
@@ -602,7 +602,7 @@ export class MasterService {
     );
 
     if (result.rowCount === 0) {
-      throw new ApiError(404, `Bag type ${id} not found`);
+      throw new ApiError(404, `Bag type not found`);
     }
     return result.rows[0];
   }
@@ -615,7 +615,7 @@ export class MasterService {
     ).catch((error: unknown) => throwReferenceConflict(error, "Bag type"));
 
     if (result.rowCount === 0) {
-      throw new ApiError(404, `Bag type ${id} not found`);
+      throw new ApiError(404, `Bag type not found`);
     }
     return result.rows[0];
   }

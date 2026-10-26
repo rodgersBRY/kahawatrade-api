@@ -214,7 +214,7 @@ export class InternalService {
       [orgId],
     );
     if (orgResult.rowCount === 0) {
-      throw new ApiError(404, `Organization ${orgId} not found`);
+      throw new ApiError(404, `Organization not found`);
     }
 
     const usageResult = await query(
