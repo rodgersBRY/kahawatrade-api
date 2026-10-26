@@ -244,7 +244,7 @@ export class ContractsService {
         `
         SELECT id, name, country
         FROM buyers
-        WHERE organization_id = $1
+        WHERE organization_id = $1 AND deleted_at IS NULL
         ORDER BY name ASC
         `,
         [actor.organizationId],
@@ -254,7 +254,7 @@ export class ContractsService {
         `
         SELECT id, code, description
         FROM grades
-        WHERE organization_id = $1
+        WHERE organization_id = $1 AND deleted_at IS NULL
         ORDER BY code ASC
         `,
         [actor.organizationId],

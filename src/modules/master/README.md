@@ -40,6 +40,17 @@ Owns core reference data used by all transactional modules:
 - `PUT /api/v1/master/bag-types/:id` (admin only)
 - `DELETE /api/v1/master/bag-types/:id` (admin only)
 
+### Delete is a soft delete
+
+`DELETE` sets `deleted_at` on the row and keeps it (`softDeleteById` in `src/db/softDelete.ts`). After that:
+
+- Existing lots, contracts and agreements still point at the row and still show its name.
+- Master lists, updates, and the procurement/contracts reference data skip it. Updating or deleting it again returns 404.
+- New records can't use it: `ensureReference` and the supplier checks in procurement return 404.
+- Inventory reference data still includes it, so lots that use it stay filterable.
+- Bulk import ignores deleted rows when checking duplicates, so a deleted name can be imported again as a new row.
+- Standard grade and bag type seeders still count deleted rows, so a deleted standard grade or bag type is not re-created on restart.
+
 ### Bulk import
 
 Each entity also supports bulk create from a spreadsheet:
