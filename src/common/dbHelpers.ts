@@ -1,5 +1,6 @@
 import { PoolClient } from "pg";
 
+import { isSoftDeleteTable } from "../db/softDelete.js";
 import { ApiError } from "./errors/ApiError.js";
 
 export const EPSILON = 1e-6;
@@ -46,11 +47,14 @@ export async function ensureReference(
     throw new ApiError(500, `Unsafe SQL identifier for table: ${table}`);
   }
 
+  // Soft-deleted master rows can't be picked for new records.
+  const activeSql = isSoftDeleteTable(table) ? " AND deleted_at IS NULL" : "";
+
   const result =
     organizationId === undefined
-      ? await client.query(`SELECT id FROM ${table} WHERE id = $1`, [id])
+      ? await client.query(`SELECT id FROM ${table} WHERE id = $1${activeSql}`, [id])
       : await client.query(
-          `SELECT id FROM ${table} WHERE id = $1 AND organization_id = $2`,
+          `SELECT id FROM ${table} WHERE id = $1 AND organization_id = $2${activeSql}`,
           [id, organizationId],
         );
 

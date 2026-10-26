@@ -7,6 +7,7 @@ import {
 } from "../../common/pagination.js";
 import { ApiError } from "../../common/errors/ApiError.js";
 import { withActor } from "../../db/pool.js";
+import { softDeleteById } from "../../db/softDelete.js";
 import { AuthContext } from "../../types/auth.js";
 import {
   BulkImportConfig,
@@ -42,7 +43,7 @@ const supplierImportConfig: BulkImportConfig<SupplierInput> = {
   ],
   schema: supplierSchema,
   dedupeKey: (input) => input.name.trim().toLowerCase(),
-  existingKeysQuery: `SELECT name AS key FROM suppliers WHERE organization_id = $1`,
+  existingKeysQuery: `SELECT name AS key FROM suppliers WHERE organization_id = $1 AND deleted_at IS NULL`,
   insertColumns: ["id", "name", "supplier_type", "country", "organization_id"],
   toInsertValues: (input, id, organizationId) => [
     id,
@@ -72,7 +73,7 @@ const buyerImportConfig: BulkImportConfig<BuyerInput> = {
   ],
   schema: buyerSchema,
   dedupeKey: (input) => input.name.trim().toLowerCase(),
-  existingKeysQuery: `SELECT name AS key FROM buyers WHERE organization_id = $1`,
+  existingKeysQuery: `SELECT name AS key FROM buyers WHERE organization_id = $1 AND deleted_at IS NULL`,
   insertColumns: ["id", "name", "country", "organization_id"],
   toInsertValues: (input, id, organizationId) => [
     id,
@@ -101,7 +102,7 @@ const warehouseImportConfig: BulkImportConfig<WarehouseInput> = {
   ],
   schema: warehouseSchema,
   dedupeKey: (input) => input.name.trim().toLowerCase(),
-  existingKeysQuery: `SELECT name AS key FROM warehouses WHERE organization_id = $1`,
+  existingKeysQuery: `SELECT name AS key FROM warehouses WHERE organization_id = $1 AND deleted_at IS NULL`,
   insertColumns: ["id", "name", "location", "organization_id"],
   toInsertValues: (input, id, organizationId) => [
     id,
@@ -125,7 +126,7 @@ const gradeImportConfig: BulkImportConfig<GradeInput> = {
   ],
   schema: gradeSchema,
   dedupeKey: (input) => input.code.trim().toLowerCase(),
-  existingKeysQuery: `SELECT code AS key FROM grades WHERE organization_id = $1`,
+  existingKeysQuery: `SELECT code AS key FROM grades WHERE organization_id = $1 AND deleted_at IS NULL`,
   insertColumns: ["id", "code", "description", "organization_id"],
   toInsertValues: (input, id, organizationId) => [
     id,
@@ -150,7 +151,7 @@ const bagTypeImportConfig: BulkImportConfig<BagTypeInput> = {
   ],
   schema: bagTypeSchema,
   dedupeKey: (input) => input.name.trim().toLowerCase(),
-  existingKeysQuery: `SELECT name AS key FROM bag_types WHERE organization_id = $1`,
+  existingKeysQuery: `SELECT name AS key FROM bag_types WHERE organization_id = $1 AND deleted_at IS NULL`,
   insertColumns: ["id", "name", "weight_kg", "organization_id"],
   toInsertValues: (input, id, organizationId) => [
     id,
@@ -159,19 +160,6 @@ const bagTypeImportConfig: BulkImportConfig<BagTypeInput> = {
     organizationId,
   ],
 };
-
-type PgErrorLike = {
-  code?: string;
-};
-
-function throwReferenceConflict(error: unknown, entityName: string): never {
-  const pgError = error as PgErrorLike;
-  if (pgError.code === "23503") {
-    throw new ApiError(409, `${entityName} is in use and cannot be deleted`);
-  }
-
-  throw error;
-}
 
 export class MasterService {
   // SUPPLIER SERVICES
@@ -208,7 +196,7 @@ export class MasterService {
       `
       UPDATE suppliers
       SET name = $1, supplier_type = $2, country = $3
-      WHERE id = $4 AND organization_id = $5
+      WHERE id = $4 AND organization_id = $5 AND deleted_at IS NULL
       RETURNING *;
       `,
       [input.name, input.type, input.country ?? null, id, actor.organizationId],
@@ -221,16 +209,7 @@ export class MasterService {
   }
 
   async deleteSupplier(id: string, actor: AuthContext): Promise<unknown> {
-    const result = await withActor(
-      actor,
-      `DELETE FROM suppliers WHERE id = $1 AND organization_id = $2 RETURNING *`,
-      [id, actor.organizationId],
-    ).catch((error: unknown) => throwReferenceConflict(error, "Supplier"));
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, `Supplier not found`);
-    }
-    return result.rows[0];
+    return softDeleteById(actor, "suppliers", id, "Supplier");
   }
 
   async listSuppliers(
@@ -242,6 +221,7 @@ export class MasterService {
 
     values.push(actor.organizationId);
     whereClauses.push(`organization_id = $${values.length}`);
+    whereClauses.push("deleted_at IS NULL");
 
     if (listQuery.search) {
       values.push(`%${escapeLikeQuery(listQuery.search)}%`);
@@ -308,7 +288,7 @@ export class MasterService {
     const result = await withActor(
       actor,
       `
-      UPDATE buyers SET name = $1, country = $2 WHERE id = $3 AND organization_id = $4 RETURNING *;
+      UPDATE buyers SET name = $1, country = $2 WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL RETURNING *;
       `,
       [input.name, input.country ?? null, id, actor.organizationId],
     );
@@ -320,16 +300,7 @@ export class MasterService {
   }
 
   async deleteBuyer(id: string, actor: AuthContext): Promise<unknown> {
-    const result = await withActor(
-      actor,
-      `DELETE FROM buyers WHERE id = $1 AND organization_id = $2 RETURNING *`,
-      [id, actor.organizationId],
-    ).catch((error: unknown) => throwReferenceConflict(error, "Buyer"));
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, `Buyer not found`);
-    }
-    return result.rows[0];
+    return softDeleteById(actor, "buyers", id, "Buyer");
   }
 
   async listBuyers(
@@ -341,6 +312,7 @@ export class MasterService {
 
     values.push(actor.organizationId);
     whereClauses.push(`organization_id = $${values.length}`);
+    whereClauses.push("deleted_at IS NULL");
 
     if (listQuery.search) {
       values.push(`%${escapeLikeQuery(listQuery.search)}%`);
@@ -406,7 +378,7 @@ export class MasterService {
     const result = await withActor(
       actor,
       `
-      UPDATE warehouses SET name = $1, location = $2 WHERE id = $3 AND organization_id = $4 RETURNING *;
+      UPDATE warehouses SET name = $1, location = $2 WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL RETURNING *;
       `,
       [input.name, input.location ?? null, id, actor.organizationId],
     );
@@ -418,16 +390,7 @@ export class MasterService {
   }
 
   async deleteWarehouse(id: string, actor: AuthContext): Promise<unknown> {
-    const result = await withActor(
-      actor,
-      `DELETE FROM warehouses WHERE id = $1 AND organization_id = $2 RETURNING *`,
-      [id, actor.organizationId],
-    ).catch((error: unknown) => throwReferenceConflict(error, "Warehouse"));
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, `Warehouse not found`);
-    }
-    return result.rows[0];
+    return softDeleteById(actor, "warehouses", id, "Warehouse");
   }
 
   async listWarehouses(
@@ -439,6 +402,7 @@ export class MasterService {
 
     values.push(actor.organizationId);
     whereClauses.push(`organization_id = $${values.length}`);
+    whereClauses.push("deleted_at IS NULL");
 
     if (listQuery.search) {
       values.push(`%${escapeLikeQuery(listQuery.search)}%`);
@@ -501,7 +465,7 @@ export class MasterService {
     const result = await withActor(
       actor,
       `
-      UPDATE grades SET code = $1, description = $2 WHERE id = $3 AND organization_id = $4 RETURNING *;
+      UPDATE grades SET code = $1, description = $2 WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL RETURNING *;
       `,
       [input.code, input.description ?? null, id, actor.organizationId],
     );
@@ -513,16 +477,7 @@ export class MasterService {
   }
 
   async deleteGrade(id: string, actor: AuthContext): Promise<unknown> {
-    const result = await withActor(
-      actor,
-      `DELETE FROM grades WHERE id = $1 AND organization_id = $2 RETURNING *`,
-      [id, actor.organizationId],
-    ).catch((error: unknown) => throwReferenceConflict(error, "Grade"));
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, `Grade not found`);
-    }
-    return result.rows[0];
+    return softDeleteById(actor, "grades", id, "Grade");
   }
 
   async listGrades(
@@ -534,6 +489,7 @@ export class MasterService {
 
     values.push(actor.organizationId);
     whereClauses.push(`organization_id = $${values.length}`);
+    whereClauses.push("deleted_at IS NULL");
 
     if (listQuery.search) {
       values.push(`%${escapeLikeQuery(listQuery.search)}%`);
@@ -596,7 +552,7 @@ export class MasterService {
     const result = await withActor(
       actor,
       `
-      UPDATE bag_types SET name = $1, weight_kg = $2 WHERE id = $3 AND organization_id = $4 RETURNING *;
+      UPDATE bag_types SET name = $1, weight_kg = $2 WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL RETURNING *;
       `,
       [input.name, input.weight_kg ?? null, id, actor.organizationId],
     );
@@ -608,16 +564,7 @@ export class MasterService {
   }
 
   async deleteBagType(id: string, actor: AuthContext): Promise<unknown> {
-    const result = await withActor(
-      actor,
-      `DELETE FROM bag_types WHERE id = $1 AND organization_id = $2 RETURNING *`,
-      [id, actor.organizationId],
-    ).catch((error: unknown) => throwReferenceConflict(error, "Bag type"));
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, `Bag type not found`);
-    }
-    return result.rows[0];
+    return softDeleteById(actor, "bag_types", id, "Bag type");
   }
 
   async listBagTypes(
@@ -629,6 +576,7 @@ export class MasterService {
 
     values.push(actor.organizationId);
     whereClauses.push(`organization_id = $${values.length}`);
+    whereClauses.push("deleted_at IS NULL");
 
     if (listQuery.search) {
       values.push(`%${escapeLikeQuery(listQuery.search)}%`);
