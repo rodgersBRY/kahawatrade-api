@@ -64,6 +64,9 @@ describe("procurement cross-org isolation", () => {
       .set(authHeader(orgA.accessToken))
       .send({
         lot_number: `AUC-${randomUUID()}`,
+        sale_number: "SALE-01",
+        outturn_number: "OT-1234",
+        mark: "Test Factory",
         marketing_agent_id: marketingAgentId,
         grade_id: gradeId,
         warehouse_id: warehouseId,

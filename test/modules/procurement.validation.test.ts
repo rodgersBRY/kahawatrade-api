@@ -15,6 +15,9 @@ describe("procurement.validation", () => {
   describe("auctionLotSchema", () => {
     const validPayload = {
       lot_number: "AUC-2026-001",
+      sale_number: "SALE-01",
+      outturn_number: "OT-1234",
+      mark: "Test Factory",
       marketing_agent_id: VALID_UUID_1,
       grade_id: VALID_UUID_2,
       warehouse_id: VALID_UUID_3,
@@ -36,6 +39,12 @@ describe("procurement.validation", () => {
       if (result.success) {
         expect(result.data.auction_fees_total).toBe(0);
       }
+    });
+
+    it.each(["sale_number", "outturn_number", "mark"] as const)("rejects a missing %s", (field) => {
+      const { [field]: _omitted, ...rest } = validPayload;
+      const result = auctionLotSchema.safeParse(rest);
+      expect(result.success).toBe(false);
     });
 
     it("rejects a missing lot_number", () => {

@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -360,7 +361,9 @@ model Lot {
   stockAdjustments StockAdjustment[]
   organization     Organization        @relation(fields: [organizationId], references: [id])
 
-  @@unique([organizationId, lotCode], map: "uniq_lots_org_code")
+  // Auction lot numbers repeat across sales, so auction lots are unique on
+  // (org, sale_number, auction_lot_number) in auction_procurements instead.
+  @@unique([organizationId, lotCode], where: raw("source = 'direct'"), map: "uniq_lots_org_code_direct")
   @@index([source], map: "idx_lots_source")
   @@index([status], map: "idx_lots_status")
   @@index([organizationId], map: "idx_lots_org")
@@ -371,6 +374,9 @@ model AuctionProcurement {
   id                  String   @id @default(uuid()) @db.Uuid
   lotId               String   @unique @map("lot_id") @db.Uuid
   auctionLotNumber    String   @map("auction_lot_number")
+  saleNumber          String?  @map("sale_number")
+  outturnNumber       String?  @map("outturn_number")
+  mark                String?
   marketingAgentId    String   @map("marketing_agent_id") @db.Uuid
   catalogDocumentPath String?  @map("catalog_document_path")
   immutable           Boolean  @default(true)
@@ -381,6 +387,7 @@ model AuctionProcurement {
   marketingAgent Supplier     @relation("auction_marketing_agent", fields: [marketingAgentId], references: [id])
   organization   Organization @relation(fields: [organizationId], references: [id])
 
+  @@unique([organizationId, saleNumber, auctionLotNumber], map: "uniq_auction_procurements_org_sale_lot")
   @@index([organizationId], map: "idx_auction_procurements_org")
   @@map("auction_procurements")
 }

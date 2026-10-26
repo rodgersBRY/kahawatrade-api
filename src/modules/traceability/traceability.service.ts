@@ -43,6 +43,9 @@ export class TraceabilityService {
       procurement = {
         source: "auction",
         auction_lot_number: auction?.auction_lot_number ?? lot.source_reference,
+        sale_number: auction?.sale_number ?? null,
+        outturn_number: auction?.outturn_number ?? null,
+        mark: auction?.mark ?? null,
         marketing_agent_id: auction?.marketing_agent_id ?? lot.supplier_id,
         marketing_agent: auction?.marketing_agent ?? lot.supplier ?? null,
         catalog_document_path: auction?.catalog_document_path ?? null,

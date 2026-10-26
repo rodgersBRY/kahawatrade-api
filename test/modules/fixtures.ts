@@ -170,6 +170,9 @@ export async function createAuctionLot(
     .set(authHeader(accessToken))
     .send({
       lot_number: `AL-${randomUUID()}`,
+      sale_number: "SALE-01",
+      outturn_number: "OT-1234",
+      mark: "Test Factory",
       marketing_agent_id: marketingAgent.id,
       grade_id: grade.id,
       warehouse_id: warehouse.id,
