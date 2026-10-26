@@ -33,3 +33,5 @@ Handles inbound lot creation from both procurement channels:
 - `reference-data` exposes user-friendly option lists for suppliers, agents, warehouses, grades, bag types, and agreements.
 - Auction intake requires `marketing_agent_id` to point to a supplier with type `auction_agent` (configured in Master Data).
 - Direct agreements cannot be created against auction marketing agents.
+- Auction intake requires `sale_number`, `outturn_number` and `mark` from the auction catalogue.
+- Auction lot numbers repeat across sales, so auction lots are unique per org on `(sale_number, auction_lot_number)`. Direct lots stay unique per org on `lot_code`.

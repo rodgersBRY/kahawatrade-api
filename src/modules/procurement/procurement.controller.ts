@@ -54,6 +54,9 @@ export class ProcurementController {
       allowedSortBy: [
         "id",
         "auction_lot_number",
+        "sale_number",
+        "outturn_number",
+        "mark",
         "marketing_agent",
         "grade",
         "warehouse",

@@ -69,6 +69,9 @@ export async function buildShippableContext(
     .set(headers)
     .send({
       lot_number: `LOT-${suffix}`,
+      sale_number: "SALE-01",
+      outturn_number: "OT-1234",
+      mark: "Test Factory",
       marketing_agent_id: supplierId,
       grade_id: gradeId,
       warehouse_id: warehouseId,
