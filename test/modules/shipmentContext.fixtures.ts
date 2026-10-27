@@ -62,6 +62,7 @@ export async function buildShippableContext(
     throw new Error(`fixture: no bag types available: ${bagTypesRes.status} ${JSON.stringify(bagTypesRes.body)}`);
   }
   const bagTypeId: string = bagTypesRes.body.data[0].id;
+  const bagWeightKg = Number(bagTypesRes.body.data[0].weight_kg);
 
   const weightTotalKg = overrides.weightTotalKg ?? 1000;
   const lotRes = await request(app)
@@ -77,7 +78,8 @@ export async function buildShippableContext(
       warehouse_id: warehouseId,
       bag_type_id: bagTypeId,
       crop_year: "2026",
-      bags: 100,
+      bags: Math.floor(weightTotalKg / bagWeightKg),
+      pocket_weight_kg: Number((weightTotalKg % bagWeightKg).toFixed(3)),
       weight_total_kg: weightTotalKg,
       purchase_price_per_kg: 5,
       auction_fees_total: 20,

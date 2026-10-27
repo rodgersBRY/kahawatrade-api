@@ -32,6 +32,13 @@ process.env.CORS_ALLOWED_ORIGINS = "http://localhost:3000";
 process.env.RATE_LIMIT_MAX = "100000";
 process.env.AUTH_RATE_LIMIT_MAX = "100000";
 process.env.NOTIFICATIONS_CRON_ENABLED = "false";
+// Prevent dotenv from enabling the real email provider during integration tests.
+process.env.EMAILJS_SERVICE_ID = "";
+process.env.EMAILJS_TEMPLATE_ID = "";
+process.env.EMAILJS_PUBLIC_KEY = "";
+process.env.EMAILJS_PRIVATE_KEY = "";
+process.env.NOTIFICATION_ADMIN_EMAILS = "";
+process.env.CRON_SECRET = "";
 process.env.IDEMPOTENCY_ENABLED = "false";
 process.env.LOG_LEVEL = "silent";
 process.env.SUPER_ADMIN_BOOTSTRAP_EMAIL = "super-admin@test.kahawatrade.local";
