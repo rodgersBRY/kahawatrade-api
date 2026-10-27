@@ -13,7 +13,7 @@ export const createOrgSchema = z.object({
   country: z.string().min(2).max(64).optional(),
   admin_full_name: z.string().min(2),
   admin_email: emailSchema,
-  admin_password: z.string().min(12),
+  admin_password: z.string().min(process.env.NODE_ENV === "development" ? 1 : 12),
   plan: z.enum(["starter", "growth", "enterprise"]).optional(),
   trial_days: z.number().int().min(0).max(365).optional(),
 });
