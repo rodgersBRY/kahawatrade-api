@@ -82,6 +82,7 @@ export async function seedStandardBagTypesForOrg(organizationId: string): Promis
       "SELECT id, name, weight_kg FROM bag_types WHERE organization_id = $1",
       [organizationId],
     );
+
     const existing = existingResult.rows;
 
     const inserted: Array<{ name: string; weight_kg: number; organization_id: string }> = [];
@@ -89,6 +90,7 @@ export async function seedStandardBagTypesForOrg(organizationId: string): Promis
     for (const seed of bootstrapBagTypes) {
       const found = existing.some((row) => {
         const existingWeight = Number(row.weight_kg);
+        
         return (
           normalizeName(row.name) === normalizeName(seed.name) ||
           sameWeight(existingWeight, seed.weightKg)

@@ -7,33 +7,33 @@
 .env.*.local
 
 
-  # Logs
-  logs/
-  *.log
-  npm-debug.log*
+# Logs
+logs/
+*.log
+npm-debug.log*
 
-  # OS
-  .DS_Store
-  Thumbs.db
+# OS
+.DS_Store
+Thumbs.db
 
-  # Editor
-  .vscode/
-  .idea/
-  *.swp
-  *.swo
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
 
-  # Prisma
-  /prisma/migrations/dev.db
-  /prisma/*.db
+# Prisma
+/prisma/migrations/dev.db
+/prisma/*.db
 
-  # Test coverage
-  /coverage
+# Test coverage
+/coverage
 
-  # Uploads (if you add file uploads)
-  /uploads
+# Uploads (if you add file uploads)
+/uploads
 
-/.claude/
+.claude/
 
-.vercel
+.vercel/
 
-/docs/
+/docs

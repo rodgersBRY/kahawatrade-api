@@ -9,7 +9,7 @@ export const userRoleSchema = z.enum([
 ]);
 
 export const registerSchema = z.object({
-  email: z.string().email({ message: "Please provide a valid email address" }),
+  email: z.email({ message: "Please provide a valid email address" }),
   password: z
     .string()
     .min(process.env.NODE_ENV === "development" ? 1 : 12, {
@@ -23,7 +23,7 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email({ message: "Please provide a valid email address" }),
+  email: z.email({ message: "Please provide a valid email address" }),
   password: z.string().min(1, { message: "Password is required" }),
 });
 

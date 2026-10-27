@@ -10,14 +10,20 @@ const CSRF_EXEMPT_PATHS = new Set([
   "/api/v1/auth/csrf-token",
 ]);
 
-export function csrfProtection(req: Request, _res: Response, next: NextFunction): void {
+export function csrfProtection(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): void {
   if (SAFE_METHODS.has(req.method.toUpperCase())) {
     next();
+
     return;
   }
 
   if (CSRF_EXEMPT_PATHS.has(req.path)) {
     next();
+
     return;
   }
 
@@ -25,12 +31,19 @@ export function csrfProtection(req: Request, _res: Response, next: NextFunction)
   if (!origin) {
     // Non-browser clients (no Origin header) are not CSRF-vulnerable in the same way.
     next();
+
     return;
   }
 
   const headerTokenRaw = req.headers["x-csrf-token"];
-  const headerToken = Array.isArray(headerTokenRaw) ? headerTokenRaw[0] : headerTokenRaw;
+
+  const headerToken = Array.isArray(headerTokenRaw)
+    ? headerTokenRaw[0]
+    : headerTokenRaw;
+
   const cookieToken = req.cookies?.[csrfCookieName] as string | undefined;
+
   verifyCsrfToken(headerToken, cookieToken);
+
   next();
 }
