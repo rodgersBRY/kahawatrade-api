@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.3 - 2026-10-27
+
+### Added
+
+- Allow editing saved operations records with field locks, role checks and an audit log of every change
+
+### Fixed
+
+- Allow simple development passwords while enforcing production strength
+
+
+
+
 ## v0.2.2 - 2026-10-26
 
 ### Added
