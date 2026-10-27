@@ -23,20 +23,28 @@ function pickFirst(value: unknown): string | undefined {
   if (typeof value === "string") {
     return value;
   }
+
   if (Array.isArray(value) && typeof value[0] === "string") {
     return value[0];
   }
+
   return undefined;
 }
 
-function parsePositiveInt(value: string | undefined, field: string, fallback: number): number {
+function parsePositiveInt(
+  value: string | undefined,
+  field: string,
+  fallback: number,
+): number {
   if (value === undefined) {
     return fallback;
   }
+
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new ApiError(400, `${field} must be a positive integer`);
   }
+
   return parsed;
 }
 
@@ -45,8 +53,15 @@ export function parseListQuery(
   options: ListQueryOptions,
 ): ListQueryParams {
   const maxPageSize = options.maxPageSize ?? 100;
+
   const page = parsePositiveInt(pickFirst(rawQuery.page), "page", 1);
-  const pageSize = parsePositiveInt(pickFirst(rawQuery.page_size), "page_size", 20);
+
+  const pageSize = parsePositiveInt(
+    pickFirst(rawQuery.page_size),
+    "page_size",
+    20,
+  );
+
   if (pageSize > maxPageSize) {
     throw new ApiError(400, `page_size must be <= ${maxPageSize}`);
   }
@@ -59,24 +74,31 @@ export function parseListQuery(
     );
   }
 
-  const sortOrderInput = (pickFirst(rawQuery.sort_order) ?? options.defaultSortOrder ?? "desc")
-    .toLowerCase();
+  const sortOrderInput = (
+    pickFirst(rawQuery.sort_order) ??
+    options.defaultSortOrder ??
+    "desc"
+  ).toLowerCase();
   if (sortOrderInput !== "asc" && sortOrderInput !== "desc") {
     throw new ApiError(400, "sort_order must be 'asc' or 'desc'");
   }
 
   const searchRaw = pickFirst(rawQuery.search)?.trim();
+
   const search = searchRaw ? searchRaw : undefined;
 
   const filters: Record<string, string> = {};
+
   for (const [key, value] of Object.entries(rawQuery)) {
     if (!key.startsWith("filter_")) {
       continue;
     }
+
     const filterValue = pickFirst(value)?.trim();
     if (!filterValue) {
       continue;
     }
+
     filters[key.slice("filter_".length)] = filterValue;
   }
 
@@ -99,10 +121,12 @@ export function toIntFilter(
   if (value === undefined) {
     return undefined;
   }
+
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new ApiError(400, `filter_${key} must be a positive integer`);
   }
+
   return parsed;
 }
 
@@ -129,13 +153,16 @@ export function toBooleanFilter(
   if (value === undefined) {
     return undefined;
   }
+
   const normalized = value.toLowerCase();
   if (normalized === "true") {
     return true;
   }
+
   if (normalized === "false") {
     return false;
   }
+
   throw new ApiError(400, `filter_${key} must be 'true' or 'false'`);
 }
 
@@ -163,6 +190,7 @@ export function buildPaginatedResult<T>(
   };
 } {
   const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
+  
   return {
     data,
     meta: {

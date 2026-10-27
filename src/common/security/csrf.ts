@@ -16,7 +16,9 @@ function signToken(rawToken: string): string {
 
 function buildToken(): string {
   const raw = crypto.randomBytes(24).toString("base64url");
+
   const signature = signToken(raw);
+
   return `${raw}.${signature}`;
 }
 
@@ -25,7 +27,9 @@ function validateTokenShape(token: string): boolean {
   if (!raw || !signature) {
     return false;
   }
+
   const expected = signToken(raw);
+
   return crypto.timingSafeEqual(
     Buffer.from(signature, "utf-8"),
     Buffer.from(expected, "utf-8"),
@@ -34,12 +38,14 @@ function validateTokenShape(token: string): boolean {
 
 export function issueCsrfToken(res: Response): string {
   const token = buildToken();
+
   res.cookie(COOKIE_NAME, token, {
     httpOnly: false,
     secure: env.nodeEnv === "production",
     sameSite: "strict",
     path: "/",
   });
+
   return token;
 }
 
@@ -50,9 +56,11 @@ export function verifyCsrfToken(
   if (!headerToken || !cookieToken) {
     throw new ApiError(403, "CSRF token is required");
   }
+
   if (!validateTokenShape(headerToken) || !validateTokenShape(cookieToken)) {
     throw new ApiError(403, "Invalid CSRF token");
   }
+  
   if (
     !crypto.timingSafeEqual(
       Buffer.from(headerToken, "utf-8"),

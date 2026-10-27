@@ -26,6 +26,7 @@ export function errorHandler(
       issues: error.issues,
     });
   }
+
   if (error instanceof ApiError) {
     return res.status(error.status).json({
       message: error.message,
@@ -48,12 +49,14 @@ export function errorHandler(
       detail: pgError.detail ?? null,
     });
   }
+
   if (pgError?.code === "23503") {
     return res.status(409).json({
       message: "Invalid reference",
       detail: pgError.detail ?? null,
     });
   }
+
   if (pgError?.code === "42P01") {
     return res.status(500).json({
       message: "Database schema is out of date. Run Prisma migrations.",
@@ -63,6 +66,7 @@ export function errorHandler(
         : {}),
     });
   }
+
   if (pgError?.code === "28P01" || pgError?.code === "3D000") {
     return res.status(500).json({
       message: "Database connection configuration is invalid.",
@@ -72,6 +76,7 @@ export function errorHandler(
         : {}),
     });
   }
+
   if (
     typeof pgError?.message === "string" &&
     (pgError.message.includes("ECONNREFUSED") ||
@@ -89,6 +94,7 @@ export function errorHandler(
     error,
     requestId: _req.requestId,
   });
+  
   return res.status(500).json({
     message: "Internal server error",
     request_id: _req.requestId ?? null,

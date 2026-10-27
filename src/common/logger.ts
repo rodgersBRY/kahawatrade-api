@@ -10,11 +10,22 @@ const devFormat = format.combine(
   format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   format.errors({ stack: true }),
   format.printf((info) => {
-    const { timestamp, level, message, service, env: nodeEnv, stack, ...meta } = info;
+    const {
+      timestamp,
+      level,
+      message,
+      service,
+      env: nodeEnv,
+      stack,
+      ...meta
+    } = info;
+
     const metaPayload = Object.keys(meta).length
       ? ` ${util.inspect(meta, { colors: true, compact: true, breakLength: 140 })}`
       : "";
+
     const stackPayload = stack ? `\n${stack}` : "";
+
     return `${timestamp} [${service}/${nodeEnv}] ${level}: ${message}${metaPayload}${stackPayload}`;
   }),
 );
