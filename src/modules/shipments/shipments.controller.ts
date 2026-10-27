@@ -2,11 +2,14 @@ import { Request, Response } from "express";
 
 import { ApiError } from "../../common/errors/ApiError.js";
 import { parseListQuery } from "../../common/pagination.js";
+import { parseUuidParam } from "../../common/params.js";
+import { updateShipment } from "./shipments.edits.js";
 import { shipmentsService } from "./shipments.service.js";
 import {
   docsGenerateSchema,
   shipmentCreateSchema,
   shipmentStatusSchema,
+  shipmentUpdateSchema,
 } from "./shipments.validation.js";
 
 export class ShipmentsController {
@@ -54,6 +57,26 @@ export class ShipmentsController {
       req.auth,
     );
     res.status(201).json(docs);
+  }
+
+  async listShipments(req: Request, res: Response): Promise<void> {
+    if (!req.auth) {
+      throw new ApiError(401, "Authentication required");
+    }
+    const query = parseListQuery(req.query as Record<string, unknown>, {
+      allowedSortBy: ["shipment_number", "status", "planned_departure", "created_at"],
+      defaultSortBy: "created_at",
+    });
+    res.json(await shipmentsService.listShipments(query, req.auth));
+  }
+
+  async updateShipment(req: Request, res: Response): Promise<void> {
+    if (!req.auth) {
+      throw new ApiError(401, "Authentication required");
+    }
+    const shipmentId = parseUuidParam(req.params.shipmentId, "shipmentId");
+    const payload = shipmentUpdateSchema.parse(req.body);
+    res.json(await updateShipment(shipmentId, payload, req.auth));
   }
 
   async listDocuments(req: Request, res: Response): Promise<void> {

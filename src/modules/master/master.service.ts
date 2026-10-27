@@ -7,7 +7,7 @@ import {
 } from "../../common/pagination.js";
 import { ApiError } from "../../common/errors/ApiError.js";
 import { withActor } from "../../db/pool.js";
-import { softDeleteById } from "../../db/softDelete.js";
+import { softDeleteById, updateActiveRow } from "../../db/softDelete.js";
 import { AuthContext } from "../../types/auth.js";
 import {
   BulkImportConfig,
@@ -191,21 +191,11 @@ export class MasterService {
     input: Partial<SupplierInput>,
     actor: AuthContext,
   ): Promise<unknown> {
-    const result = await withActor(
-      actor,
-      `
-      UPDATE suppliers
-      SET name = $1, supplier_type = $2, country = $3
-      WHERE id = $4 AND organization_id = $5 AND deleted_at IS NULL
-      RETURNING *;
-      `,
-      [input.name, input.type, input.country ?? null, id, actor.organizationId],
-    );
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, `Supplier not found`);
-    }
-    return result.rows[0];
+    return updateActiveRow(actor, "suppliers", id, "Supplier", {
+      name: input.name,
+      supplier_type: input.type,
+      country: input.country ?? null,
+    });
   }
 
   async deleteSupplier(id: string, actor: AuthContext): Promise<unknown> {
@@ -285,18 +275,10 @@ export class MasterService {
     input: Partial<BuyerInput>,
     actor: AuthContext,
   ): Promise<unknown> {
-    const result = await withActor(
-      actor,
-      `
-      UPDATE buyers SET name = $1, country = $2 WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL RETURNING *;
-      `,
-      [input.name, input.country ?? null, id, actor.organizationId],
-    );
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, `Buyer not found`);
-    }
-    return result.rows[0];
+    return updateActiveRow(actor, "buyers", id, "Buyer", {
+      name: input.name,
+      country: input.country ?? null,
+    });
   }
 
   async deleteBuyer(id: string, actor: AuthContext): Promise<unknown> {
@@ -375,18 +357,10 @@ export class MasterService {
     input: Partial<WarehouseInput>,
     actor: AuthContext,
   ): Promise<unknown> {
-    const result = await withActor(
-      actor,
-      `
-      UPDATE warehouses SET name = $1, location = $2 WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL RETURNING *;
-      `,
-      [input.name, input.location ?? null, id, actor.organizationId],
-    );
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, `Warehouse not found`);
-    }
-    return result.rows[0];
+    return updateActiveRow(actor, "warehouses", id, "Warehouse", {
+      name: input.name,
+      location: input.location ?? null,
+    });
   }
 
   async deleteWarehouse(id: string, actor: AuthContext): Promise<unknown> {
@@ -462,18 +436,10 @@ export class MasterService {
     input: Partial<GradeInput>,
     actor: AuthContext,
   ): Promise<unknown> {
-    const result = await withActor(
-      actor,
-      `
-      UPDATE grades SET code = $1, description = $2 WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL RETURNING *;
-      `,
-      [input.code, input.description ?? null, id, actor.organizationId],
-    );
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, `Grade not found`);
-    }
-    return result.rows[0];
+    return updateActiveRow(actor, "grades", id, "Grade", {
+      code: input.code,
+      description: input.description ?? null,
+    });
   }
 
   async deleteGrade(id: string, actor: AuthContext): Promise<unknown> {
@@ -549,18 +515,10 @@ export class MasterService {
     input: Partial<BagTypeInput>,
     actor: AuthContext,
   ): Promise<unknown> {
-    const result = await withActor(
-      actor,
-      `
-      UPDATE bag_types SET name = $1, weight_kg = $2 WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL RETURNING *;
-      `,
-      [input.name, input.weight_kg ?? null, id, actor.organizationId],
-    );
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, `Bag type not found`);
-    }
-    return result.rows[0];
+    return updateActiveRow(actor, "bag_types", id, "Bag type", {
+      name: input.name,
+      weight_kg: input.weight_kg ?? null,
+    });
   }
 
   async deleteBagType(id: string, actor: AuthContext): Promise<unknown> {

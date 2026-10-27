@@ -36,3 +36,15 @@ procurementRouter.get(
   "/direct-deliveries",
   asyncHandler(procurementController.listDirectDeliveries.bind(procurementController)),
 );
+procurementRouter.patch(
+  "/auction-lots/:lotId",
+  asyncHandler(procurementController.updateAuctionLot.bind(procurementController)),
+);
+procurementRouter.patch(
+  "/direct-deliveries/:deliveryId",
+  asyncHandler(procurementController.updateDirectDelivery.bind(procurementController)),
+);
+procurementRouter.patch(
+  "/direct-agreements/:agreementId",
+  asyncHandler(procurementController.updateDirectAgreement.bind(procurementController)),
+);

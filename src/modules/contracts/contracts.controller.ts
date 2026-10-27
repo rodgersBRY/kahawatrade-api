@@ -2,8 +2,14 @@ import { Request, Response } from "express";
 
 import { ApiError } from "../../common/errors/ApiError.js";
 import { parseListQuery } from "../../common/pagination.js";
+import { parseUuidParam } from "../../common/params.js";
+import { cancelAllocation, updateContract } from "./contracts.edits.js";
 import { contractsService } from "./contracts.service.js";
-import { allocationSchema, contractSchema } from "./contracts.validation.js";
+import {
+  allocationSchema,
+  contractSchema,
+  contractUpdateSchema,
+} from "./contracts.validation.js";
 
 export class ContractsController {
   private parseUuid(value: string | string[] | undefined, label: string): string {
@@ -66,6 +72,54 @@ export class ContractsController {
     }
     const data = await contractsService.getReferenceData(req.auth);
     res.json(data);
+  }
+
+  async listContracts(req: Request, res: Response): Promise<void> {
+    if (!req.auth) {
+      throw new ApiError(401, "Authentication required");
+    }
+    const query = parseListQuery(req.query as Record<string, unknown>, {
+      allowedSortBy: [
+        "contract_number",
+        "status",
+        "quantity_kg",
+        "shipment_window_start",
+        "shipment_window_end",
+        "created_at",
+      ],
+      defaultSortBy: "created_at",
+    });
+    res.json(await contractsService.listContracts(query, req.auth));
+  }
+
+  async updateContract(req: Request, res: Response): Promise<void> {
+    if (!req.auth) {
+      throw new ApiError(401, "Authentication required");
+    }
+    const contractId = parseUuidParam(req.params.contractId, "contractId");
+    const payload = contractUpdateSchema.parse(req.body);
+    res.json(await updateContract(contractId, payload, req.auth));
+  }
+
+  async listAllocations(req: Request, res: Response): Promise<void> {
+    if (!req.auth) {
+      throw new ApiError(401, "Authentication required");
+    }
+    const contractId = parseUuidParam(req.params.contractId, "contractId");
+    const query = parseListQuery(req.query as Record<string, unknown>, {
+      allowedSortBy: ["created_at", "allocated_kg", "status"],
+      defaultSortBy: "created_at",
+    });
+    res.json(await contractsService.listAllocations(contractId, query, req.auth));
+  }
+
+  async cancelAllocation(req: Request, res: Response): Promise<void> {
+    if (!req.auth) {
+      throw new ApiError(401, "Authentication required");
+    }
+    const contractId = parseUuidParam(req.params.contractId, "contractId");
+    const allocationId = parseUuidParam(req.params.allocationId, "allocationId");
+    res.json(await cancelAllocation(contractId, allocationId, req.auth));
   }
 }
 

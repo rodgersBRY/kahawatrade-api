@@ -145,6 +145,118 @@ export class ContractsService {
     return allocated.allocation;
   }
 
+  async listContracts(listQuery: ListQueryParams, actor: AuthContext): Promise<unknown> {
+    const whereClauses: string[] = [];
+    const values: unknown[] = [];
+    const buyerId = toUuidFilter(listQuery.filters, "buyer_id");
+
+    values.push(actor.organizationId);
+    whereClauses.push(`c.organization_id = $${values.length}`);
+
+    if (listQuery.search) {
+      values.push(`%${escapeLikeQuery(listQuery.search)}%`);
+      whereClauses.push(`c.contract_number ILIKE $${values.length} ESCAPE '\\'`);
+    }
+    if (listQuery.filters.status) {
+      values.push(listQuery.filters.status);
+      whereClauses.push(`c.status = $${values.length}`);
+    }
+    if (buyerId) {
+      values.push(buyerId);
+      whereClauses.push(`c.buyer_id = $${values.length}`);
+    }
+
+    const whereSql = `WHERE ${whereClauses.join(" AND ")}`;
+    const countResult = await withActor<{ total: number }>(
+      actor,
+      `SELECT COUNT(*)::int AS total FROM contracts c ${whereSql}`,
+      values,
+    );
+    values.push(listQuery.pageSize, listQuery.offset);
+    const result = await withActor(
+      actor,
+      `
+      SELECT
+        c.id,
+        c.contract_number,
+        c.buyer_id,
+        b.name AS buyer,
+        c.grade_id,
+        g.code AS grade,
+        c.quantity_kg,
+        c.price_per_kg,
+        c.price_terms,
+        c.currency,
+        c.shipment_window_start,
+        c.shipment_window_end,
+        c.allocated_kg,
+        c.shipped_kg,
+        c.status,
+        c.created_at
+      FROM contracts c
+      JOIN buyers b ON b.id = c.buyer_id
+      LEFT JOIN grades g ON g.id = c.grade_id
+      ${whereSql}
+      ORDER BY c.${listQuery.sortBy} ${listQuery.sortOrder}
+      LIMIT $${values.length - 1} OFFSET $${values.length}
+      `,
+      values,
+    );
+    return buildPaginatedResult(result.rows, Number(countResult.rows[0].total), listQuery);
+  }
+
+  async listAllocations(
+    contractId: string,
+    listQuery: ListQueryParams,
+    actor: AuthContext,
+  ): Promise<unknown> {
+    const contract = await withActor(
+      actor,
+      "SELECT id FROM contracts WHERE id = $1 AND organization_id = $2",
+      [contractId, actor.organizationId],
+    );
+    if (contract.rowCount === 0) {
+      throw new ApiError(404, `Contract not found`);
+    }
+
+    const values: unknown[] = [contractId, actor.organizationId];
+    const whereClauses = ["a.contract_id = $1", "a.organization_id = $2"];
+    if (listQuery.filters.status) {
+      values.push(listQuery.filters.status);
+      whereClauses.push(`a.status = $${values.length}`);
+    }
+    const whereSql = `WHERE ${whereClauses.join(" AND ")}`;
+
+    const countResult = await withActor<{ total: number }>(
+      actor,
+      `SELECT COUNT(*)::int AS total FROM allocations a ${whereSql}`,
+      values,
+    );
+    values.push(listQuery.pageSize, listQuery.offset);
+    const result = await withActor(
+      actor,
+      `
+      SELECT
+        a.id,
+        a.contract_id,
+        a.lot_id,
+        l.lot_code,
+        a.allocated_kg,
+        a.status,
+        s.shipment_number,
+        a.created_at
+      FROM allocations a
+      JOIN lots l ON l.id = a.lot_id
+      LEFT JOIN shipments s ON s.id = a.shipment_id
+      ${whereSql}
+      ORDER BY a.${listQuery.sortBy} ${listQuery.sortOrder}
+      LIMIT $${values.length - 1} OFFSET $${values.length}
+      `,
+      values,
+    );
+    return buildPaginatedResult(result.rows, Number(countResult.rows[0].total), listQuery);
+  }
+
   async getDashboard(listQuery: ListQueryParams, actor: AuthContext): Promise<unknown> {
     const whereClauses: string[] = [];
     const values: unknown[] = [];

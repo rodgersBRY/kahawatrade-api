@@ -120,6 +120,7 @@ model Organization {
   stockAdjustments    StockAdjustment[]
   notes               OrgNote[]
   impersonationLogs   ImpersonationLog[]
+  auditLogs           AuditLog[]
   onboardedByAdmin    SuperAdmin?          @relation("org_onboarded_by", fields: [onboardedBy], references: [id])
 
   @@index([status], map: "idx_org_status")
@@ -558,4 +559,25 @@ model StockAdjustment {
 
   @@index([organizationId], map: "idx_stock_adjustments_org")
   @@map("stock_adjustments")
+}
+
+// Append-only history of edits, deletes and cancellations on saved records.
+// `changes` maps each changed field to { from, to }.
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  entityType     String   @map("entity_type")
+  entityId       String   @map("entity_id") @db.Uuid
+  action         String
+  changes        Json     @default("{}")
+  userId         String?  @map("user_id") @db.Uuid
+  actorRole      String   @map("actor_role")
+  apiKeyId       String?  @map("api_key_id") @db.Uuid
+  impersonated   Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at")
+  organizationId String   @map("organization_id") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, entityType, entityId, createdAt], map: "idx_audit_logs_entity")
+  @@map("audit_logs")
 }

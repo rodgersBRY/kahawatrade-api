@@ -30,3 +30,15 @@ export const docsGenerateSchema = z.object({
 export type ShipmentCreateInput = z.infer<typeof shipmentCreateSchema>;
 export type ShipmentStatusInput = z.infer<typeof shipmentStatusSchema>;
 export type DocsGenerateInput = z.infer<typeof docsGenerateSchema>;
+
+export const shipmentUpdateSchema = z
+  .object({
+    shipment_number: z.string().min(1),
+    container_number: z.string(),
+    seal_number: z.string(),
+    planned_departure: z.string().date(),
+  })
+  .partial()
+  .strict();
+
+export type ShipmentUpdateInput = z.infer<typeof shipmentUpdateSchema>;

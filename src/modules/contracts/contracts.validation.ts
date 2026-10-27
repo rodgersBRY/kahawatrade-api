@@ -26,3 +26,20 @@ export const allocationSchema = z.object({
 
 export type ContractInput = z.infer<typeof contractSchema>;
 export type AllocationInput = z.infer<typeof allocationSchema>;
+
+export const contractUpdateSchema = z
+  .object({
+    contract_number: z.string().min(1),
+    buyer_id: z.string().uuid(),
+    grade_id: z.string().uuid().nullable(),
+    quantity_kg: z.number().positive(),
+    price_per_kg: z.number().positive(),
+    price_terms: z.enum(["fob", "cif"]),
+    currency: z.string().min(1),
+    shipment_window_start: z.string().date(),
+    shipment_window_end: z.string().date(),
+  })
+  .partial()
+  .strict();
+
+export type ContractUpdateInput = z.infer<typeof contractUpdateSchema>;
