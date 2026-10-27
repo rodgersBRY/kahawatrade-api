@@ -10,12 +10,13 @@ export const auctionLotSchema = z.object({
   warehouse_id: z.string().uuid(),
   bag_type_id: z.string().uuid(),
   crop_year: z.string().min(1),
-  bags: z.number().int().positive(),
-  weight_total_kg: z.number().positive(),
+  bags: z.number().int().nonnegative(),
+  pocket_weight_kg: z.number().nonnegative().default(0),
+  weight_total_kg: z.number().positive().optional(),
   purchase_price_per_kg: z.number().positive(),
   auction_fees_total: z.number().nonnegative().default(0),
   catalog_document_path: z.string().optional(),
-});
+}).refine((value) => value.bags > 0 || value.pocket_weight_kg > 0, { message: "Enter bags or pocket weight" });
 
 export const directAgreementSchema = z.object({
   supplier_id: z.string().uuid(),
@@ -32,17 +33,17 @@ export const directDeliverySchema = z.object({
   grade_id: z.string().uuid(),
   warehouse_id: z.string().uuid(),
   bag_type_id: z.string().uuid(),
-  bags: z.number().int().positive(),
-  weight_total_kg: z.number().positive(),
+  bags: z.number().int().nonnegative(),
+  pocket_weight_kg: z.number().nonnegative().default(0),
+  weight_total_kg: z.number().positive().optional(),
   moisture_percent: z.number().nonnegative(),
   screen_size: z.number().nonnegative(),
   defects_percent: z.number().nonnegative(),
   processing_cost_total: z.number().nonnegative().default(0),
   transport_cost_total: z.number().nonnegative().default(0),
-});
+}).refine((value) => value.bags > 0 || value.pocket_weight_kg > 0, { message: "Enter bags or pocket weight" });
 
-// Edit bodies list only the fields that may change. Weights and bags are left
-// out on purpose: corrections go through inventory stock adjustments.
+// Packaging edits preserve stock weight; weight corrections use stock adjustments.
 export const auctionLotUpdateSchema = z
   .object({
     lot_number: z.string().trim().min(1),
@@ -53,6 +54,8 @@ export const auctionLotUpdateSchema = z
     grade_id: z.string().uuid(),
     warehouse_id: z.string().uuid(),
     bag_type_id: z.string().uuid(),
+    bags: z.number().int().nonnegative(),
+    pocket_weight_kg: z.number().nonnegative(),
     crop_year: z.string().min(1),
     purchase_price_per_kg: z.number().positive(),
     auction_fees_total: z.number().nonnegative(),
@@ -68,6 +71,8 @@ export const directDeliveryUpdateSchema = z
     grade_id: z.string().uuid(),
     warehouse_id: z.string().uuid(),
     bag_type_id: z.string().uuid(),
+    bags: z.number().int().nonnegative(),
+    pocket_weight_kg: z.number().nonnegative(),
     moisture_percent: z.number().nonnegative(),
     screen_size: z.number().nonnegative(),
     defects_percent: z.number().nonnegative(),

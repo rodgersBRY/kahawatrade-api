@@ -87,6 +87,10 @@ describe("procurement.validation", () => {
       expect(result.success).toBe(false);
     });
 
+    it("accepts a pocket-only lot", () => {
+      expect(auctionLotSchema.safeParse({ ...validPayload, bags: 0, pocket_weight_kg: 25 }).success).toBe(true);
+    });
+
     it("rejects zero bags", () => {
       const result = auctionLotSchema.safeParse({ ...validPayload, bags: 0 });
       expect(result.success).toBe(false);

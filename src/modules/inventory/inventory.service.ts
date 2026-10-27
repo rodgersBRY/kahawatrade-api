@@ -74,6 +74,7 @@ export class InventoryService {
         l.source_reference,
         l.crop_year,
         l.bags_total,
+        l.pocket_weight_kg,
         l.weight_total_kg,
         l.weight_available_kg,
         l.purchase_price_per_kg,
