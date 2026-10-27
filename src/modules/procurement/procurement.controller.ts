@@ -2,11 +2,20 @@ import { Request, Response } from "express";
 
 import { ApiError } from "../../common/errors/ApiError.js";
 import { parseListQuery } from "../../common/pagination.js";
+import { parseUuidParam } from "../../common/params.js";
+import {
+  updateAuctionLot,
+  updateDirectAgreement,
+  updateDirectDelivery,
+} from "./procurement.edits.js";
 import { procurementService } from "./procurement.service.js";
 import {
   auctionLotSchema,
+  auctionLotUpdateSchema,
   directAgreementSchema,
+  directAgreementUpdateSchema,
   directDeliverySchema,
+  directDeliveryUpdateSchema,
 } from "./procurement.validation.js";
 
 export class ProcurementController {
@@ -121,6 +130,33 @@ export class ProcurementController {
     }
     const data = await procurementService.getReferenceData(req.auth);
     res.json(data);
+  }
+
+  async updateAuctionLot(req: Request, res: Response): Promise<void> {
+    if (!req.auth) {
+      throw new ApiError(401, "Authentication required");
+    }
+    const lotId = parseUuidParam(req.params.lotId, "lotId");
+    const payload = auctionLotUpdateSchema.parse(req.body);
+    res.json(await updateAuctionLot(lotId, payload, req.auth));
+  }
+
+  async updateDirectDelivery(req: Request, res: Response): Promise<void> {
+    if (!req.auth) {
+      throw new ApiError(401, "Authentication required");
+    }
+    const deliveryId = parseUuidParam(req.params.deliveryId, "deliveryId");
+    const payload = directDeliveryUpdateSchema.parse(req.body);
+    res.json(await updateDirectDelivery(deliveryId, payload, req.auth));
+  }
+
+  async updateDirectAgreement(req: Request, res: Response): Promise<void> {
+    if (!req.auth) {
+      throw new ApiError(401, "Authentication required");
+    }
+    const agreementId = parseUuidParam(req.params.agreementId, "agreementId");
+    const payload = directAgreementUpdateSchema.parse(req.body);
+    res.json(await updateDirectAgreement(agreementId, payload, req.auth));
   }
 }
 

@@ -11,6 +11,22 @@ costsRouter.post(
   asyncHandler(financeController.createCostEntry.bind(financeController)),
 );
 costsRouter.get(
+  "/entries",
+  asyncHandler(financeController.listCostEntries.bind(financeController)),
+);
+costsRouter.patch(
+  "/entries/:entryId",
+  asyncHandler(financeController.updateCostEntry.bind(financeController)),
+);
+costsRouter.get(
+  "/lots",
+  asyncHandler(financeController.listLotPricing.bind(financeController)),
+);
+costsRouter.patch(
+  "/lots/:lotId",
+  asyncHandler(financeController.updateLotPricing.bind(financeController)),
+);
+costsRouter.get(
   "/reference-data",
   asyncHandler(financeController.getReferenceData.bind(financeController)),
 );

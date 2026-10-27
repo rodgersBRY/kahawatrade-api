@@ -2,6 +2,11 @@ import crypto from "node:crypto";
 
 import { ApiError } from "../../common/errors/ApiError.js";
 import { ensureReference, toNumber } from "../../common/dbHelpers.js";
+import {
+  ListQueryParams,
+  buildPaginatedResult,
+  escapeLikeQuery,
+} from "../../common/pagination.js";
 import { withActor, withTransaction } from "../../db/pool.js";
 import { AuthContext } from "../../types/auth.js";
 import { CostEntryInput } from "./finance.validation.js";
@@ -35,6 +40,97 @@ export class FinanceService {
       );
       return result.rows[0];
     }, actor);
+  }
+
+  async listCostEntries(listQuery: ListQueryParams, actor: AuthContext): Promise<unknown> {
+    const values: unknown[] = [actor.organizationId];
+    const whereClauses = ["ce.organization_id = $1"];
+    if (listQuery.search) {
+      values.push(`%${escapeLikeQuery(listQuery.search)}%`);
+      whereClauses.push(
+        `(ce.category ILIKE $${values.length} ESCAPE '\\' OR ce.notes ILIKE $${values.length} ESCAPE '\\')`,
+      );
+    }
+    if (listQuery.filters.category) {
+      values.push(listQuery.filters.category);
+      whereClauses.push(`ce.category = $${values.length}`);
+    }
+    const whereSql = `WHERE ${whereClauses.join(" AND ")}`;
+
+    const countResult = await withActor<{ total: number }>(
+      actor,
+      `SELECT COUNT(*)::int AS total FROM cost_entries ce ${whereSql}`,
+      values,
+    );
+    values.push(listQuery.pageSize, listQuery.offset);
+    const result = await withActor(
+      actor,
+      `
+      SELECT
+        ce.id,
+        ce.category,
+        ce.amount,
+        ce.currency,
+        ce.notes,
+        l.lot_code AS lot,
+        s.shipment_number AS shipment,
+        ce.created_at
+      FROM cost_entries ce
+      LEFT JOIN lots l ON l.id = ce.lot_id
+      LEFT JOIN shipments s ON s.id = ce.shipment_id
+      ${whereSql}
+      ORDER BY ce.${listQuery.sortBy} ${listQuery.sortOrder}
+      LIMIT $${values.length - 1} OFFSET $${values.length}
+      `,
+      values,
+    );
+    return buildPaginatedResult(result.rows, Number(countResult.rows[0].total), listQuery);
+  }
+
+  async listLotPricing(listQuery: ListQueryParams, actor: AuthContext): Promise<unknown> {
+    const values: unknown[] = [actor.organizationId];
+    const whereClauses = ["organization_id = $1"];
+    if (listQuery.search) {
+      values.push(`%${escapeLikeQuery(listQuery.search)}%`);
+      whereClauses.push(`lot_code ILIKE $${values.length} ESCAPE '\\'`);
+    }
+    if (listQuery.filters.source) {
+      values.push(listQuery.filters.source);
+      whereClauses.push(`source = $${values.length}`);
+    }
+    if (listQuery.filters.status) {
+      values.push(listQuery.filters.status);
+      whereClauses.push(`status = $${values.length}`);
+    }
+    const whereSql = `WHERE ${whereClauses.join(" AND ")}`;
+
+    const countResult = await withActor<{ total: number }>(
+      actor,
+      `SELECT COUNT(*)::int AS total FROM lots ${whereSql}`,
+      values,
+    );
+    values.push(listQuery.pageSize, listQuery.offset);
+    const result = await withActor(
+      actor,
+      `
+      SELECT
+        id,
+        lot_code,
+        source,
+        status,
+        weight_total_kg,
+        purchase_price_per_kg,
+        auction_fees_total,
+        additional_cost_total,
+        created_at
+      FROM lots
+      ${whereSql}
+      ORDER BY ${listQuery.sortBy} ${listQuery.sortOrder}
+      LIMIT $${values.length - 1} OFFSET $${values.length}
+      `,
+      values,
+    );
+    return buildPaginatedResult(result.rows, Number(countResult.rows[0].total), listQuery);
   }
 
   async getContractProfitability(contractId: string, actor: AuthContext): Promise<unknown> {

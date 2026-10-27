@@ -357,19 +357,35 @@ npm run prisma:migrate:deploy
 - `GET /api/v1/procurement/direct-agreements`
 - `POST /api/v1/procurement/direct-deliveries`
 - `GET /api/v1/procurement/direct-deliveries`
+- `PATCH /api/v1/procurement/auction-lots/:lotId`
+- `PATCH /api/v1/procurement/direct-agreements/:agreementId`
+- `PATCH /api/v1/procurement/direct-deliveries/:deliveryId`
 - `GET /api/v1/inventory/lots`
 - `POST /api/v1/inventory/adjustments`
 - `GET /api/v1/inventory/dashboard`
 - `POST /api/v1/contracts`
+- `GET /api/v1/contracts`
+- `PATCH /api/v1/contracts/:contractId`
+- `GET /api/v1/contracts/:contractId/allocations`
+- `POST /api/v1/contracts/:contractId/allocations/:allocationId/cancel`
 - `POST /api/v1/contracts/:contractId/allocations`
 - `GET /api/v1/contracts/dashboard`
 - `POST /api/v1/shipments`
+- `GET /api/v1/shipments`
+- `PATCH /api/v1/shipments/:shipmentId`
 - `PATCH /api/v1/shipments/:shipmentId/status`
 - `POST /api/v1/shipments/:shipmentId/documents/generate`
 - `GET /api/v1/shipments/:shipmentId/documents`
 - `POST /api/v1/costs/entries`
+- `GET /api/v1/costs/entries`
+- `PATCH /api/v1/costs/entries/:entryId`
+- `GET /api/v1/costs/lots`
+- `PATCH /api/v1/costs/lots/:lotId`
 - `GET /api/v1/profitability/contracts/:contractId`
+- `GET /api/v1/audit-logs?entity_type=&entity_id=`
 - `GET /api/v1/traceability/lots/:lotId`
+
+Which fields each edit endpoint can change, and when they lock, is in [src/modules/audit/README.md](src/modules/audit/README.md).
 
 ## Important business guarantees in the API
 

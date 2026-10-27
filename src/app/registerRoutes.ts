@@ -3,6 +3,7 @@ import { Express } from "express";
 import { authenticate, authorize } from "../common/middleware/auth.js";
 import { ensureOrgActive } from "../common/middleware/ensureOrgActive.js";
 import { idempotencyMiddleware } from "../common/middleware/idempotency.js";
+import { auditRouter } from "../modules/audit/audit.routes.js";
 import { authRouter } from "../modules/auth/auth.routes.js";
 import { contractsRouter } from "../modules/contracts/contracts.routes.js";
 import { costsRouter, profitabilityRouter } from "../modules/finance/finance.routes.js";
@@ -82,5 +83,13 @@ export function registerRoutes(app: Express): void {
     ensureOrgActive,
     idempotencyMiddleware,
     traceabilityRouter,
+  );
+  // Per-entity role checks live in the audit service.
+  app.use(
+    "/api/v1/audit-logs",
+    authenticate,
+    authorize("admin", "trader", "warehouse", "finance", "compliance"),
+    ensureOrgActive,
+    auditRouter,
   );
 }

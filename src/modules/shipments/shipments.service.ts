@@ -11,6 +11,7 @@ import {
 import {
   ListQueryParams,
   buildPaginatedResult,
+  escapeLikeQuery,
 } from "../../common/pagination.js";
 import { withActor, withTransaction } from "../../db/pool.js";
 import { AuthContext } from "../../types/auth.js";
@@ -369,6 +370,52 @@ export class ShipmentsService {
     });
 
     return generated.documents;
+  }
+
+  async listShipments(listQuery: ListQueryParams, actor: AuthContext): Promise<unknown> {
+    const values: unknown[] = [actor.organizationId];
+    const whereClauses = ["s.organization_id = $1"];
+    if (listQuery.search) {
+      values.push(`%${escapeLikeQuery(listQuery.search)}%`);
+      whereClauses.push(
+        `(s.shipment_number ILIKE $${values.length} ESCAPE '\\' OR c.contract_number ILIKE $${values.length} ESCAPE '\\')`,
+      );
+    }
+    if (listQuery.filters.status) {
+      values.push(listQuery.filters.status);
+      whereClauses.push(`s.status = $${values.length}`);
+    }
+    const whereSql = `WHERE ${whereClauses.join(" AND ")}`;
+
+    const countResult = await withActor<{ total: number }>(
+      actor,
+      `SELECT COUNT(*)::int AS total FROM shipments s JOIN contracts c ON c.id = s.contract_id ${whereSql}`,
+      values,
+    );
+    values.push(listQuery.pageSize, listQuery.offset);
+    const result = await withActor(
+      actor,
+      `
+      SELECT
+        s.id,
+        s.shipment_number,
+        s.contract_id,
+        c.contract_number,
+        s.status,
+        s.container_number,
+        s.seal_number,
+        s.planned_departure,
+        s.actual_departure,
+        s.created_at
+      FROM shipments s
+      JOIN contracts c ON c.id = s.contract_id
+      ${whereSql}
+      ORDER BY s.${listQuery.sortBy} ${listQuery.sortOrder}
+      LIMIT $${values.length - 1} OFFSET $${values.length}
+      `,
+      values,
+    );
+    return buildPaginatedResult(result.rows, Number(countResult.rows[0].total), listQuery);
   }
 
   async listDocuments(shipmentId: string, listQuery: ListQueryParams, actor: AuthContext): Promise<unknown> {

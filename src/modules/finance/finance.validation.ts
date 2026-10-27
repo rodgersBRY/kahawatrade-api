@@ -10,3 +10,15 @@ export const costEntrySchema = z.object({
 });
 
 export type CostEntryInput = z.infer<typeof costEntrySchema>;
+
+export const costEntryUpdateSchema = z
+  .object({
+    category: z.string().min(1),
+    amount: z.number().positive(),
+    currency: z.string().min(1),
+    notes: z.string(),
+  })
+  .partial()
+  .strict();
+
+export type CostEntryUpdateInput = z.infer<typeof costEntryUpdateSchema>;
