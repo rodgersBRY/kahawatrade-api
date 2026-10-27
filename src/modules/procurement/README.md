@@ -35,3 +35,20 @@ Handles inbound lot creation from both procurement channels:
 - Direct agreements cannot be created against auction marketing agents.
 - Auction intake requires `sale_number`, `outturn_number` and `mark` from the auction catalogue.
 - Auction lot numbers repeat across sales, so auction lots are unique per org on `(sale_number, auction_lot_number)`. Direct lots stay unique per org on `lot_code`.
+
+### Bags and pockets
+
+New auction lots and direct deliveries store `pocket_weight_kg` (default zero).
+The API calculates total and initial available kg from bags × bag type weight +
+pocket weight. A supplied total is not used to override this calculation.
+Pockets must be smaller than the bag size, with up to three decimal places;
+pocket-only lots are supported.
+
+Normal lot PATCH endpoints accept `bags` and `pocket_weight_kg`. Packaging edits
+must match the recorded total and never change available kg. Existing edit locks
+and audit history apply. Actual stock weight corrections use inventory adjustments.
+The pocket value describes received packaging, not remaining physical packages.
+
+Apply migration `20261027120000_lot_pockets` before deploying the API. Existing
+lots retain NULL pocket weights until reviewed; the migration does not infer them.
+Run `npm run test:unit` for database-independent validation/calculation tests.

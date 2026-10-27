@@ -346,6 +346,7 @@ model Lot {
   warehouseId         String    @map("warehouse_id") @db.Uuid
   bagTypeId           String    @map("bag_type_id") @db.Uuid
   cropYear            String    @map("crop_year")
+  pocketWeightKg      Decimal?  @map("pocket_weight_kg") @db.Decimal(12, 3)
   bagsTotal           Int       @map("bags_total")
   weightTotalKg       Decimal   @map("weight_total_kg") @db.Decimal(12, 3)
   weightAvailableKg   Decimal   @map("weight_available_kg") @db.Decimal(12, 3)

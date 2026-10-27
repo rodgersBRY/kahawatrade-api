@@ -1,3 +1,4 @@
+import { calculatePackaging } from "./packaging.js";
 import crypto from "node:crypto";
 
 import { ApiError } from "../../common/errors/ApiError.js";
@@ -38,15 +39,16 @@ export class ProcurementService {
       await ensureReference(client, "warehouses", input.warehouse_id, "Warehouse", actor.organizationId);
       await ensureReference(client, "bag_types", input.bag_type_id, "Bag type", actor.organizationId);
 
+      const weight = await calculatePackaging(client, actor.organizationId, input.bag_type_id, input.bags, input.pocket_weight_kg);
       const lotId = crypto.randomUUID();
       const lotResult = await client.query(
         `
         INSERT INTO lots (
           id, lot_code, source, source_reference, supplier_id, grade_id, warehouse_id, bag_type_id, crop_year,
-          bags_total, weight_total_kg, weight_available_kg, purchase_price_per_kg,
+          pocket_weight_kg, bags_total, weight_total_kg, weight_available_kg, purchase_price_per_kg,
           auction_fees_total, additional_cost_total, status, organization_id
         )
-        VALUES ($1, $2, 'auction', $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, 0, 'in_stock', $13)
+        VALUES ($1, $2, 'auction', $3, $4, $5, $6, $7, $8, $14, $9, $10, $10, $11, $12, 0, 'in_stock', $13)
         RETURNING *;
         `,
         [
@@ -59,10 +61,11 @@ export class ProcurementService {
           input.bag_type_id,
           input.crop_year,
           input.bags,
-          input.weight_total_kg,
+          weight,
           input.purchase_price_per_kg,
           input.auction_fees_total,
           actor.organizationId,
+          input.pocket_weight_kg,
         ],
       );
       const insertedLot = lotResult.rows[0];
@@ -147,15 +150,16 @@ export class ProcurementService {
       await ensureReference(client, "bag_types", input.bag_type_id, "Bag type", actor.organizationId);
 
       const additionalCost = input.processing_cost_total + input.transport_cost_total;
+      const weight = await calculatePackaging(client, actor.organizationId, input.bag_type_id, input.bags, input.pocket_weight_kg);
       const lotId = crypto.randomUUID();
       const lotResult = await client.query(
         `
         INSERT INTO lots (
           id, lot_code, source, source_reference, supplier_id, grade_id, warehouse_id, bag_type_id, crop_year,
-          bags_total, weight_total_kg, weight_available_kg, purchase_price_per_kg,
+          pocket_weight_kg, bags_total, weight_total_kg, weight_available_kg, purchase_price_per_kg,
           auction_fees_total, additional_cost_total, status, organization_id
         )
-        VALUES ($1, $2, 'direct', $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, 0, $12, 'in_stock', $13)
+        VALUES ($1, $2, 'direct', $3, $4, $5, $6, $7, $8, $14, $9, $10, $10, $11, 0, $12, 'in_stock', $13)
         RETURNING *;
         `,
         [
@@ -168,10 +172,11 @@ export class ProcurementService {
           input.bag_type_id,
           agreement.crop_year,
           input.bags,
-          input.weight_total_kg,
+          weight,
           agreement.agreed_price_per_kg,
           additionalCost,
           actor.organizationId,
+          input.pocket_weight_kg,
         ],
       );
       const insertedLot = lotResult.rows[0];
@@ -318,6 +323,7 @@ export class ProcurementService {
         bt.name AS bag_type,
         l.crop_year,
         l.bags_total AS bags,
+        l.pocket_weight_kg,
         l.weight_total_kg,
         l.weight_available_kg,
         l.purchase_price_per_kg,
@@ -418,6 +424,7 @@ export class ProcurementService {
         bt.name AS bag_type,
         l.crop_year,
         l.bags_total AS bags,
+        l.pocket_weight_kg,
         l.weight_total_kg,
         l.weight_available_kg,
         da.agreed_price_per_kg,

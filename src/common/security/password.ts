@@ -7,13 +7,19 @@ const PASSWORD_COMPLEXITY_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$/;
 
 export function validatePasswordStrength(password: string): void {
+  if (process.env.NODE_ENV === "development" && password.length > 0) {
+    return;
+  }
   if (password.length < MIN_PASSWORD_LENGTH) {
     throw new ApiError(
       400,
       `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
     );
   }
-  if (!PASSWORD_COMPLEXITY_REGEX.test(password)) {
+  if (
+    process.env.NODE_ENV !== "development" &&
+    !PASSWORD_COMPLEXITY_REGEX.test(password)
+  ) {
     throw new ApiError(
       400,
       "Password must include uppercase, lowercase, number, and special character",

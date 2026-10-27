@@ -86,7 +86,7 @@ export async function createBagType(accessToken: string): Promise<{ id: string; 
  */
 export async function createDirectLot(
   accessToken: string,
-  overrides: Partial<{ weight_total_kg: number; bags: number }> = {},
+  overrides: Partial<{ weight_total_kg: number; bags: number; pocket_weight_kg: number }> = {},
 ): Promise<{
   lot: Record<string, unknown>;
   supplier: { id: string; name: string };
@@ -128,7 +128,8 @@ export async function createDirectLot(
       grade_id: grade.id,
       warehouse_id: warehouse.id,
       bag_type_id: bagType.id,
-      bags: overrides.bags ?? 10,
+      bags: overrides.bags ?? (overrides.weight_total_kg === undefined ? 10 : Math.floor(overrides.weight_total_kg / 60)),
+      pocket_weight_kg: overrides.pocket_weight_kg ?? (overrides.weight_total_kg === undefined ? 0 : overrides.weight_total_kg % 60),
       weight_total_kg: overrides.weight_total_kg ?? 600,
       moisture_percent: 11.5,
       screen_size: 18,
@@ -150,7 +151,7 @@ export async function createDirectLot(
  */
 export async function createAuctionLot(
   accessToken: string,
-  overrides: Partial<{ weight_total_kg: number; bags: number }> = {},
+  overrides: Partial<{ weight_total_kg: number; bags: number; pocket_weight_kg: number }> = {},
 ): Promise<{
   lot: Record<string, unknown>;
   marketingAgent: { id: string; name: string };
@@ -178,7 +179,8 @@ export async function createAuctionLot(
       warehouse_id: warehouse.id,
       bag_type_id: bagType.id,
       crop_year: "2025",
-      bags: overrides.bags ?? 10,
+      bags: overrides.bags ?? (overrides.weight_total_kg === undefined ? 10 : Math.floor(overrides.weight_total_kg / 60)),
+      pocket_weight_kg: overrides.pocket_weight_kg ?? (overrides.weight_total_kg === undefined ? 0 : overrides.weight_total_kg % 60),
       weight_total_kg: overrides.weight_total_kg ?? 600,
       purchase_price_per_kg: 5,
       auction_fees_total: 10,

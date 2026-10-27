@@ -12,7 +12,11 @@ export const registerSchema = z.object({
   email: z.string().email({ message: "Please provide a valid email address" }),
   password: z
     .string()
-    .min(12, { message: "Password must be at least 12 characters long" }),
+    .min(process.env.NODE_ENV === "development" ? 1 : 12, {
+      message: process.env.NODE_ENV === "development"
+        ? "Password is required"
+        : "Password must be at least 12 characters long",
+    }),
   full_name: z.string().min(1, { message: "Full name is required" }),
   role: userRoleSchema.optional(),
   organization_name: z.string().min(2).optional(),

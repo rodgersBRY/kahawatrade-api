@@ -1,3 +1,4 @@
+import { calculatePackaging } from "./packaging.js";
 import { PoolClient } from "pg";
 
 import {
@@ -160,6 +161,8 @@ export async function updateAuctionLot(
       grade_id: lot.grade_id,
       warehouse_id: lot.warehouse_id,
       bag_type_id: lot.bag_type_id,
+      bags: lot.bags_total,
+      pocket_weight_kg: lot.pocket_weight_kg,
       crop_year: lot.crop_year,
       purchase_price_per_kg: lot.purchase_price_per_kg,
       auction_fees_total: lot.auction_fees_total,
@@ -178,6 +181,13 @@ export async function updateAuctionLot(
       }
     }
     await ensureChangedReferences(client, changed, input, actor.organizationId);
+    if (changed.some((key) => ["bags", "pocket_weight_kg", "bag_type_id"].includes(key))) {
+      const weight = await calculatePackaging(client, actor.organizationId, String(input.bag_type_id ?? lot.bag_type_id), Number(input.bags ?? lot.bags_total), Number(input.pocket_weight_kg ?? lot.pocket_weight_kg ?? 0));
+      if (Math.round(weight * 1000) !== Math.round(Number(lot.weight_total_kg) * 1000)) {
+        throw new ApiError(400, "Bags and pocket weight must match the recorded total weight; use a stock adjustment to change stock weight");
+      }
+    }
+
 
     const updatedLot = await updateColumns(
       client,
@@ -191,6 +201,8 @@ export async function updateAuctionLot(
         grade_id: ["grade_id"],
         warehouse_id: ["warehouse_id"],
         bag_type_id: ["bag_type_id"],
+        bags: ["bags_total"],
+        pocket_weight_kg: ["pocket_weight_kg"],
         crop_year: ["crop_year"],
         purchase_price_per_kg: ["purchase_price_per_kg"],
         auction_fees_total: ["auction_fees_total"],
@@ -245,6 +257,8 @@ export async function updateDirectDelivery(
       grade_id: lot.grade_id,
       warehouse_id: lot.warehouse_id,
       bag_type_id: lot.bag_type_id,
+      bags: lot.bags_total,
+      pocket_weight_kg: lot.pocket_weight_kg,
       moisture_percent: delivery.moisture_percent,
       screen_size: delivery.screen_size,
       defects_percent: delivery.defects_percent,
@@ -258,6 +272,13 @@ export async function updateDirectDelivery(
 
     assertLotEditable(changed, await loadLotState(client, lotId, actor.organizationId), DIRECT_IDENTITY_FIELDS);
     await ensureChangedReferences(client, changed, input, actor.organizationId);
+    if (changed.some((key) => ["bags", "pocket_weight_kg", "bag_type_id"].includes(key))) {
+      const weight = await calculatePackaging(client, actor.organizationId, String(input.bag_type_id ?? lot.bag_type_id), Number(input.bags ?? lot.bags_total), Number(input.pocket_weight_kg ?? lot.pocket_weight_kg ?? 0));
+      if (Math.round(weight * 1000) !== Math.round(Number(lot.weight_total_kg) * 1000)) {
+        throw new ApiError(400, "Bags and pocket weight must match the recorded total weight; use a stock adjustment to change stock weight");
+      }
+    }
+
 
     await updateColumns(
       client,
@@ -271,6 +292,8 @@ export async function updateDirectDelivery(
         grade_id: ["grade_id"],
         warehouse_id: ["warehouse_id"],
         bag_type_id: ["bag_type_id"],
+        bags: ["bags_total"],
+        pocket_weight_kg: ["pocket_weight_kg"],
         purchase_price_per_kg: ["purchase_price_per_kg"],
         additional_cost_total: ["additional_cost_total"],
       }),
